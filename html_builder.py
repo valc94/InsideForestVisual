@@ -286,6 +286,34 @@ def tvd(stats: dict[str, Any], classes: list[str], min_a: int, min_b: int) -> fl
     return 0.5 * delta
 
 
+
+
+
+def _load_base_template() -> str:
+    template_path = Path(__file__).with_name("Template_Base.html")
+    if template_path.exists():
+        return template_path.read_text(encoding="utf-8")
+    return ""
+
+
+def _render_html_from_template(template: str, payload: dict[str, Any], dcfg: DatasetConfig, row_count: int, sampling_info: dict[str, Any]) -> str:
+    ranking_rows = "".join(
+        f'<tr><td class="p-2">{r["id"]}</td><td class="p-2">{r["name"]}</td><td class="p-2">{r["tvd"]:.3f}</td><td class="p-2">{r["onlyA"]}|{r["intersection"]}|{r["onlyB"]}</td></tr>'
+        for r in payload["ranking"]
+    )
+    return (template
+        .replace("{{TITLE}}", "InsideForestVisual - Generado en Python")
+        .replace("{{HEADER}}", "InsideForestVisual - HTML Generado")
+        .replace("{{DATASET_ID}}", dcfg.dataset_id)
+        .replace("{{ROW_COUNT}}", str(row_count))
+        .replace("{{FEATURES}}", ", ".join(dcfg.feature_columns))
+        .replace("{{SAMPLING_STATUS}}", "activo" if sampling_info["applied"] else "no aplicado")
+        .replace("{{SAMPLING_STRATEGY}}", str(sampling_info["strategy"]))
+        .replace("{{RANKING_ROWS}}", ranking_rows)
+        .replace("{{PAYLOAD_JSON}}", json.dumps(payload, ensure_ascii=False))
+    )
+
+
 def build_html(rows: list[dict[str, Any]], dcfg: DatasetConfig, ecfg: EvaluationConfig, experiments: list[Experiment]) -> str:
     rows = apply_missing_strategy(rows, dcfg.feature_columns, dcfg.missing_strategy)
     rows, sampling_info = sample_rows_if_large(
@@ -346,39 +374,21 @@ def build_html(rows: list[dict[str, Any]], dcfg: DatasetConfig, ecfg: Evaluation
         ],
     }
 
-    return f"""<!DOCTYPE html>
-<html lang=\"es\">
-<head>
-  <meta charset=\"utf-8\" />
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>InsideForestVisual - Generado en Python</title>
-  <script src=\"https://cdn.tailwindcss.com\"></script>
-</head>
-<body class=\"bg-slate-950 text-slate-100\">
-  <main class=\"max-w-6xl mx-auto p-6\">
-    <h1 class=\"text-2xl font-bold mb-2\">InsideForestVisual - HTML Generado</h1>
-    <p class=\"text-slate-300 mb-4\">Dataset: {dcfg.dataset_id} | Filas usadas: {len(rows)} | Features: {', '.join(dcfg.feature_columns)}</p>
-    <p class=\"text-slate-400 mb-4 text-sm\">Sampling: {'activo' if sampling_info['applied'] else 'no aplicado'} ({sampling_info['strategy']})</p>
-    <h2 class=\"text-xl font-semibold mt-6\">Ranking (TVD)</h2>
-    <div class=\"overflow-x-auto\">
-      <table class=\"min-w-full text-sm mt-2 border border-slate-800\">
-        <thead><tr class=\"bg-slate-900\"><th class=\"p-2\">ID</th><th class=\"p-2\">Experimento</th><th class=\"p-2\">TVD</th><th class=\"p-2\">A|I|B</th></tr></thead>
-        <tbody>
-          {''.join(f'<tr><td class="p-2">{r["id"]}</td><td class="p-2">{r["name"]}</td><td class="p-2">{r["tvd"]:.3f}</td><td class="p-2">{r["onlyA"]}|{r["intersection"]}|{r["onlyB"]}</td></tr>' for r in payload['ranking'])}
-        </tbody>
-      </table>
-    </div>
+    template = _load_base_template()
+    if template:
+        return _render_html_from_template(template, payload, dcfg, len(rows), sampling_info)
 
-    <h2 class=\"text-xl font-semibold mt-6\">Configuración embebida</h2>
-    <pre class=\"text-xs bg-slate-900 p-4 rounded border border-slate-800 overflow-auto\" id=\"payload\"></pre>
-  </main>
-  <script>
-    const payload = {json.dumps(payload, ensure_ascii=False)};
-    document.getElementById('payload').textContent = JSON.stringify(payload, null, 2);
-  </script>
-</body>
-</html>
-"""
+    # fallback autocontenido si falta el template externo
+    return (
+        "<!DOCTYPE html><html lang=\"es\"><head><meta charset=\"utf-8\" />"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />"
+        "<title>InsideForestVisual - Generado en Python</title><script src=\"https://cdn.tailwindcss.com\"></script>"
+        "</head><body class=\"bg-slate-950 text-slate-100\"><main class=\"max-w-6xl mx-auto p-6\">"
+        f"<h1 class=\"text-2xl font-bold mb-2\">InsideForestVisual - HTML Generado</h1><p class=\"text-slate-300 mb-4\">Dataset: {dcfg.dataset_id} | Filas usadas: {len(rows)} | Features: {', '.join(dcfg.feature_columns)}</p>"
+        "<pre id=\"payload\"></pre></main><script>const payload = "
+        + json.dumps(payload, ensure_ascii=False)
+        + ";document.getElementById('payload').textContent = JSON.stringify(payload, null, 2);</script></body></html>"
+    )
 
 
 def iris_rows(seed: int = 1234) -> list[dict[str, Any]]:

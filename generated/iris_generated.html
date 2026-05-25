@@ -5,24 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>InsideForestVisual - Generado en Python</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #070a13; color: #f1f5f9; }
+    .glass-card { background: rgba(11, 15, 25, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100">
-  <main class="max-w-6xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-2">InsideForestVisual - HTML Generado</h1>
-    <p class="text-slate-300 mb-4">Dataset: iris_sintetico | Filas usadas: 150 | Features: sepal_length, sepal_width, petal_length, petal_width</p>
-    <p class="text-slate-400 mb-4 text-sm">Sampling: no aplicado (none)</p>
-    <h2 class="text-xl font-semibold mt-6">Ranking (TVD)</h2>
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm mt-2 border border-slate-800">
-        <thead><tr class="bg-slate-900"><th class="p-2">ID</th><th class="p-2">Experimento</th><th class="p-2">TVD</th><th class="p-2">A|I|B</th></tr></thead>
-        <tbody>
-          <tr><td class="p-2">1</td><td class="p-2">Setosa vs resto</td><td class="p-2">1.000</td><td class="p-2">47|0|55</td></tr><tr><td class="p-2">2</td><td class="p-2">Transición media</td><td class="p-2">0.485</td><td class="p-2">32|0|39</td></tr>
-        </tbody>
-      </table>
-    </div>
+<body class="font-sans antialiased min-h-screen">
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <section class="glass-card p-5 rounded-2xl">
+      <h1 class="text-2xl font-extrabold mb-2">InsideForestVisual - HTML Generado</h1>
+      <p class="text-slate-300 mb-1">Dataset: iris_sintetico</p>
+      <p class="text-slate-400 text-sm mb-4">Filas usadas: 150 · Features: sepal_length, sepal_width, petal_length, petal_width</p>
+      <p class="text-slate-400 text-sm mb-4">Sampling: no aplicado (none)</p>
 
-    <h2 class="text-xl font-semibold mt-6">Configuración embebida</h2>
-    <pre class="text-xs bg-slate-900 p-4 rounded border border-slate-800 overflow-auto" id="payload"></pre>
+      <h2 class="text-xl font-semibold mt-6">Ranking (TVD)</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm mt-2 border border-slate-800">
+          <thead><tr class="bg-slate-900"><th class="p-2">ID</th><th class="p-2">Experimento</th><th class="p-2">TVD</th><th class="p-2">A|I|B</th></tr></thead>
+          <tbody><tr><td class="p-2">1</td><td class="p-2">Setosa vs resto</td><td class="p-2">1.000</td><td class="p-2">47|0|55</td></tr><tr><td class="p-2">2</td><td class="p-2">Transición media</td><td class="p-2">0.485</td><td class="p-2">32|0|39</td></tr></tbody>
+        </table>
+      </div>
+
+      <h2 class="text-xl font-semibold mt-6">Configuración embebida</h2>
+      <pre class="text-xs bg-slate-900 p-4 rounded border border-slate-800 overflow-auto" id="payload"></pre>
+    </section>
   </main>
   <script>
     const payload = {"dataset_config": {"dataset_id": "iris_sintetico", "feature_columns": ["sepal_length", "sepal_width", "petal_length", "petal_width"], "target_column": "species", "id_column": "id", "missing_strategy": "drop", "scaling_mode_default": "zscore", "random_seed": 98765, "sampling_threshold": 2500, "sample_size": 2500, "sampling_strategy": "stratified", "target_mode": "classification", "regression_bins": 10}, "sampling_info": {"applied": false, "strategy": "none", "original_rows": 150, "final_rows": 150}, "target_mode_info": {"requested": "classification", "effective": "classification", "bins": 10}, "evaluation_config": {"primary_metric": "tvd", "min_samples_only_a": 5, "min_samples_only_b": 5, "ranking_order": "desc"}, "experiments": [{"id": 1, "name": "Setosa vs resto", "description": "Separación por pétalo estrecho", "target_column": "species", "enabled": true, "tags": ["baseline", "high_tvd"], "rules": {"intersection": [{"field": "petal_length", "min": 1.0, "max": 5.0, "native": "raw"}], "only_cluster_a": [{"field": "petal_width", "min": 0.1, "max": 0.7, "native": "raw"}], "only_cluster_b": [{"field": "petal_width", "min": 1.0, "max": 2.5, "native": "raw"}]}}, {"id": 2, "name": "Transición media", "description": "Corredor central", "target_column": "species", "enabled": true, "tags": ["stress"], "rules": {"intersection": [{"field": "sepal_length", "min": 4.8, "max": 6.5, "native": "raw"}], "only_cluster_a": [{"field": "sepal_width", "min": -1.0, "max": 0.0, "native": "scaled"}], "only_cluster_b": [{"field": "sepal_width", "min": 0.1, "max": 1.8, "native": "scaled"}]}}], "ranking": [{"id": 1, "name": "Setosa vs resto", "tvd": 1.0, "onlyA": 47, "intersection": 0, "onlyB": 55}, {"id": 2, "name": "Transición media", "tvd": 0.484776, "onlyA": 32, "intersection": 0, "onlyB": 39}]};
