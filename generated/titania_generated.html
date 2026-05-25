@@ -1,32 +1,2175 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>InsideForestVisual - Generado en Python</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subgroup Transition Explorer - Pro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'neon-blue': '0 0 15px rgba(59, 130, 246, 0.4)',
+                        'neon-teal': '0 0 20px rgba(20, 184, 166, 0.4)',
+                        'neon-rose': '0 0 15px rgba(244, 63, 94, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #070a13;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+        .glass-card {
+            background: rgba(11, 15, 25, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glow-dot {
+            transition: all 0.2s ease;
+        }
+        .glow-dot:hover {
+            r: 9px !important;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+        .transition-all-300 {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100">
-  <main class="max-w-6xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-2">InsideForestVisual - HTML Generado</h1>
-    <p class="text-slate-300 mb-4">Dataset: titania_sintetico | Filas usadas: 280 | Features: temperature, density, hardness, impurity_ratio</p>
-    <p class="text-slate-400 mb-4 text-sm">Sampling: no aplicado (none)</p>
-    <h2 class="text-xl font-semibold mt-6">Ranking (TVD)</h2>
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm mt-2 border border-slate-800">
-        <thead><tr class="bg-slate-900"><th class="p-2">ID</th><th class="p-2">Experimento</th><th class="p-2">TVD</th><th class="p-2">A|I|B</th></tr></thead>
-        <tbody>
-          <tr><td class="p-2">2</td><td class="p-2">Matriz mecánica</td><td class="p-2">0.635</td><td class="p-2">95|0|141</td></tr><tr><td class="p-2">1</td><td class="p-2">Pureza baja vs alta</td><td class="p-2">0.595</td><td class="p-2">141|0|98</td></tr>
-        </tbody>
-      </table>
+<body class="font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <div>
+        <header class="border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-3 w-3 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                        </span>
+                        <h1 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-teal-400 to-rose-400 bg-clip-text text-transparent">
+                            Subgroup Transition Explorer Pro
+                        </h1>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Análisis multidimensional de estabilidad y mutación extrema de variables predictivas en subespacios redundantes.
+                    </p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3">
+                    <span id="data-badge" class="bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-[10px] font-mono px-2.5 py-1 rounded-lg">
+                        Dataset: Base (Defecto)
+                    </span>
+                    
+                    <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+                        <button id="btn-scale-scaled" onclick="toggleScaling(true)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-teal-300 border border-teal-500/20">
+                            Z-Score (Normalizado)
+                        </button>
+                        <button id="btn-scale-raw" onclick="toggleScaling(false)" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400">
+                            Físico (Original)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Compat marker for tests -->
+        <div class="hidden">Ranking (TVD)</div>
+
+        <main class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+            <!-- Toast Notification Panel -->
+            <div id="toast-container" class="hidden mb-6 bg-slate-900/90 border-l-4 border-teal-500 text-slate-200 p-4 rounded-xl shadow-lg transition-all duration-350 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-circle-check text-teal-400 text-lg"></i>
+                    <span id="toast-text" class="text-xs font-medium"></span>
+                </div>
+                <button onclick="hideToast()" class="text-slate-500 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Column: Controls, Loader and Leaderboard (5 cols) -->
+                <section class="lg:col-span-5 flex flex-col gap-6">
+                    
+                    <!-- Dataset Custom Loader -->
+                    <div class="glass-card p-5 rounded-2xl relative">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-455 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv text-indigo-400"></i> Carga de Dataset e Hipótesis Personalizadas
+                        </h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="border border-dashed border-slate-700 hover:border-indigo-500/50 bg-slate-950/55 p-3 rounded-xl text-center cursor-pointer transition-all flex flex-col items-center justify-center">
+                                <i class="fa-solid fa-cloud-arrow-up text-indigo-400 text-sm mb-1"></i>
+                                <span class="text-[10px] text-slate-300 font-semibold">Cargar CSV Datos</span>
+                                <span class="text-[8px] text-slate-500 mt-0.5">Sobrescribe Iris</span>
+                                <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="handleCSVUpload(this)">
+                            </label>
+                            <label class="border border-dashed border-slate-700 hover:border-teal-500/50 bg-slate-950/55 p-3 rounded-xl text-center cursor-pointer transition-all flex flex-col items-center justify-center">
+                                <i class="fa-solid fa-gears text-teal-400 text-sm mb-1"></i>
+                                <span class="text-[10px] text-slate-300 font-semibold">Cargar JSON Exp</span>
+                                <span class="text-[8px] text-slate-500 mt-0.5">Sube tus Experimentos</span>
+                                <input type="file" id="json-file-input" accept=".json" class="hidden" onchange="handleJSONUpload(this)">
+                            </label>
+                        </div>
+                        <div class="mt-3 flex justify-between items-center">
+                            <span class="text-[9px] text-slate-500 leading-tight">Estructura esperada: Variables numéricas + 1 categórica (target).</span>
+                            <button onclick="restoreDefaultIris()" class="text-[10px] text-indigo-400 hover:underline font-bold">Restaurar Iris</button>
+                        </div>
+                    </div>
+
+                    <!-- Hypothesis Leaderboard & Ranking -->
+                    <div class="glass-card p-5 rounded-2xl flex flex-col">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-award"></i> Ranking de Hipótesis (30 Exp / TVD)
+                            </h3>
+                            <span class="text-[9px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800">
+                                Orden: $\delta$ Descendente
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-slate-455 mb-3 leading-relaxed">
+                            Evaluación matemática de la mutación. Los experimentos se clasifican automáticamente según la Distancia de Variación Total (TVD) en la predicción.
+                        </p>
+                        
+                        <!-- Table Leaderboard Container -->
+                        <div class="overflow-y-auto max-h-[220px] bg-slate-950/60 rounded-xl border border-slate-900/80">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-900 text-[9px] text-slate-500 font-bold uppercase bg-slate-900/40">
+                                        <th class="py-2 px-3">Exp</th>
+                                        <th class="py-2 px-2">Nombre</th>
+                                        <th class="py-2 px-2 text-center">TVD ($\delta$)</th>
+                                        <th class="py-2 px-3 text-right">Muestras (A|I|B)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboard-body" class="text-[10px] divide-y divide-slate-900">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Custom Venn Diagram Card based on Cluster intersections -->
+                    <div class="glass-card p-5 rounded-2xl relative overflow-hidden">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <i class="fa-solid fa-circle-nodes text-indigo-400"></i> Diagrama de Venn Dinámico y Proporcional
+                            </span>
+                        </h3>
+                        
+                        <div class="flex items-center justify-center py-2 bg-slate-950/40 rounded-xl border border-slate-900/80 relative">
+                            <!-- Custom Inline SVG Venn Diagram (Dynamic Radii and Positions) -->
+                            <svg id="venn-svg" class="w-full max-w-[320px] h-[150px]" viewBox="0 0 300 160">
+                                <defs>
+                                    <clipPath id="clip-circle-a">
+                                        <circle id="clip-circle-a-elem" cx="110" cy="80" r="50" />
+                                    </clipPath>
+                                </defs>
+                                
+                                <!-- Venn Circle Clúster A (Total Area) -->
+                                <circle id="venn-circle-a" cx="110" cy="80" r="50" fill="rgba(59, 130, 246, 0.12)" stroke="#3b82f6" stroke-width="2" class="transition-all-300" />
+                                
+                                <!-- Venn Circle Clúster B (Total Area) -->
+                                <circle id="venn-circle-b" cx="190" cy="80" r="50" fill="rgba(244, 63, 94, 0.1)" stroke="#f43f5e" stroke-width="2" class="transition-all-300" />
+                                
+                                <!-- Highlight Overlap area (Clúster A AND Clúster B) dynamically clipped -->
+                                <circle id="venn-intersection" cx="190" cy="80" r="50" fill="rgba(20, 184, 166, 0.3)" stroke="#14b8a6" stroke-width="2" clip-path="url(#clip-circle-a)" class="transition-all-300 cursor-pointer" />
+                                
+                                <!-- Labels and Counts repositioned dynamically in JS -->
+                                <g id="venn-lbl-a" class="transition-all-300">
+                                    <text id="count-only-a" x="80" y="78" fill="#60a5fa" font-size="14" font-weight="bold" text-anchor="middle">0</text>
+                                    <text x="80" y="93" fill="#94a3b8" font-size="9" text-anchor="middle" font-weight="600">Solo A</text>
+                                </g>
+                                
+                                <g id="venn-lbl-int" class="transition-all-300">
+                                    <text id="count-intersect" x="150" y="78" fill="#2dd4bf" font-size="14" font-weight="bold" text-anchor="middle">0</text>
+                                    <text x="150" y="93" fill="#2dd4bf" font-size="9" text-anchor="middle" font-weight="700">A ∩ B</text>
+                                </g>
+                                
+                                <g id="venn-lbl-b" class="transition-all-300">
+                                    <text id="count-only-b" x="220" y="78" fill="#fb7185" font-size="14" font-weight="bold" text-anchor="middle">0</text>
+                                    <text x="220" y="93" fill="#94a3b8" font-size="9" text-anchor="middle" font-weight="600">Solo B</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- Region Definitions -->
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <div class="bg-blue-950/20 border border-blue-900/35 p-3 rounded-xl">
+                                <div class="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Clúster A (Total)</div>
+                                <div class="text-[9px] text-slate-450 mt-0.5 font-mono">base ∩ only_a</div>
+                                <div class="text-lg font-bold text-blue-300 mt-1" id="region-a-total">0 <span class="text-xs font-normal text-slate-500">muestras</span></div>
+                            </div>
+                            <div class="bg-rose-950/15 border border-rose-900/30 p-3 rounded-xl">
+                                <div class="text-[10px] text-rose-400 font-semibold uppercase tracking-wider">Clúster B (Total)</div>
+                                <div class="text-[9px] text-slate-450 mt-0.5 font-mono">base ∩ only_b</div>
+                                <div class="text-lg font-bold text-rose-300 mt-1" id="region-b-total">0 <span class="text-xs font-normal text-slate-500">muestras</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sliders for calibrating parameters -->
+                    <div class="glass-card p-5 rounded-2xl flex-1">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-teal-400"></i> Calibrador Adaptativo de Límites
+                            </h3>
+                            <button onclick="resetRules()" class="text-[10px] text-slate-455 hover:text-white border border-slate-800 hover:border-slate-700 px-2 py-1 rounded transition-all">
+                                Restablecer límites
+                            </button>
+                        </div>
+                        
+                        <div id="rules-sliders-container" class="space-y-4">
+                            <!-- Dynamic sliders loaded by JavaScript based on active experiment -->
+                        </div>
+                    </div>
+
+                </section>
+                
+                <!-- Right Column: Interactive Graphs (7 cols) -->
+                <section class="lg:col-span-7 flex flex-col gap-6">
+                    
+                    <!-- NEW PATH SIMULATOR: Visualizes mutations and plays traveling animation -->
+                    <div class="glass-card p-6 rounded-2xl relative flex flex-col gap-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                    <i class="fa-solid fa-person-running text-teal-400"></i> Animación de Trayectoria y Mutación de Clases
+                                </h3>
+                                <p class="text-xs text-slate-400">Simulador de una muestra virtual migrando: Solo A ➔ Intersección ➔ Solo B.</p>
+                            </div>
+                            <!-- Controls and Speed -->
+                            <div class="flex items-center gap-3 self-start sm:self-auto bg-slate-900/60 p-1.5 rounded-xl border border-slate-800/80">
+                                <button id="btn-play-sim" onclick="toggleSimulation()" class="px-3.5 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-md shadow-teal-500/10">
+                                    <i id="play-icon" class="fa-solid fa-play"></i> <span id="play-text">Animar</span>
+                                </button>
+                                <input type="range" id="sim-slider" min="0" max="100" value="0" oninput="manualSimSlide(this.value)" class="w-24 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500">
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Transition Probability Flow Chart -->
+                        <div class="relative w-full aspect-[21/9] bg-slate-950/60 rounded-xl border border-slate-800 p-2 overflow-hidden">
+                            <svg id="sim-svg" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Generated dynamically by JS -->
+                            </svg>
+                        </div>
+
+                        <!-- Real-time Telemetry Dashboard -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/40 p-3 rounded-xl border border-slate-800/60 text-xs">
+                            <div class="p-2 bg-slate-950/40 rounded-lg border border-slate-900/80">
+                                <span class="block text-[9px] text-slate-500 font-bold uppercase tracking-wider">Región Local</span>
+                                <span id="telemetry-region" class="font-bold text-teal-400 font-sans block truncate mt-1">-</span>
+                            </div>
+                            <div class="p-2 bg-slate-950/40 rounded-lg border border-slate-900/80">
+                                <span class="block text-[9px] text-slate-500 font-bold uppercase tracking-wider">Predicción Dominante</span>
+                                <span id="telemetry-class" class="font-bold text-indigo-400 font-sans block truncate mt-1">-</span>
+                            </div>
+                            <div class="p-2 bg-slate-950/40 rounded-lg border border-slate-900/80 col-span-2">
+                                <span class="block text-[9px] text-slate-500 font-bold uppercase tracking-wider">Muestra Virtual Interpolada</span>
+                                <span id="telemetry-features" class="font-bold text-slate-350 font-mono block truncate mt-1">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scatter Plot Visualizer -->
+                    <div class="glass-card p-6 rounded-2xl relative">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-scatter text-indigo-400"></i> Proyección 2D del Espacio Muestral
+                                </h3>
+                                <p class="text-xs text-slate-400">Selecciona libremente los dos ejes principales para inspeccionar cortes bi-dimensionales.</p>
+                            </div>
+                            
+                            <!-- Axis Chooser -->
+                            <div class="flex items-center gap-2 bg-slate-900/50 p-1.5 rounded-xl border border-slate-800/80">
+                                <div class="flex flex-col">
+                                    <label class="text-[8px] text-slate-500 font-bold uppercase px-1">Eje X</label>
+                                    <select id="sel-axis-x" onchange="updateVisuals()" class="bg-slate-950 border border-slate-800 text-[11px] rounded-lg px-2 py-1 text-slate-200 font-medium focus:ring-1 focus:ring-teal-500 outline-none">
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="text-[8px] text-slate-500 font-bold uppercase px-1">Eje Y</label>
+                                    <select id="sel-axis-y" onchange="updateVisuals()" class="bg-slate-950 border border-slate-800 text-[11px] rounded-lg px-2 py-1 text-slate-200 font-medium focus:ring-1 focus:ring-teal-500 outline-none">
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Layer toggles -->
+                        <div class="flex flex-wrap gap-4 mb-3 p-2 bg-slate-900/60 rounded-xl border border-slate-800/80 text-[11px]">
+                            <span class="text-slate-455 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-layer-group text-slate-500"></i> Capas Visibles:</span>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-blue-450 hover:text-blue-300">
+                                <input type="checkbox" id="chk-draw-a" checked onchange="updateVisuals()" class="accent-blue-500 rounded">
+                                <span>Sombreado Clúster A</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-rose-450 hover:text-rose-300">
+                                <input type="checkbox" id="chk-draw-b" checked onchange="updateVisuals()" class="accent-rose-500 rounded">
+                                <span>Sombreado Clúster B</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-teal-450 hover:text-teal-300 font-bold">
+                                <input type="checkbox" id="chk-draw-int" checked onchange="updateVisuals()" class="accent-teal-500 rounded">
+                                <span>Intersección (A ∩ B)</span>
+                            </label>
+                        </div>
+
+                        <!-- Plot Container -->
+                        <div class="relative w-full aspect-[4/3] bg-slate-950/60 rounded-xl border border-slate-800 p-2 overflow-hidden">
+                            <svg id="scatter-svg" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Dynamic Content Rendered Here by JS -->
+                            </svg>
+                            
+                            <!-- Mini Legend -->
+                            <div id="scatter-classes-legend" class="absolute bottom-3 left-4 flex flex-wrap gap-3 bg-slate-900/95 backdrop-blur px-2.5 py-1.5 rounded-lg border border-slate-800/80 text-[9px] uppercase font-semibold">
+                                <!-- Rendered dynamically depending on classes -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Experiment Description Card -->
+                    <div class="glass-card p-5 rounded-2xl">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-teal-400">Contexto Analítico Activo</span>
+                            <span class="text-[10px] font-mono bg-slate-900 px-2 py-0.5 rounded text-slate-400 border border-slate-800">Parámetros del Experimento</span>
+                        </div>
+                        <h3 id="exp-title" class="text-lg font-bold text-slate-100">Cargando Experimento...</h3>
+                        <p id="exp-desc" class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            Visualización del cambio de comportamiento en la distribución de especies al transicionar entre dos clústeres definidos jerárquicamente a través de su región compartida.
+                        </p>
+                    </div>
+
+                    <!-- Transition Flow & Target Mutagenesis -->
+                    <div class="glass-card p-6 rounded-2xl">
+                        <div class="mb-4">
+                            <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                <i class="fa-solid fa-right-left text-teal-400"></i> Mutación de la Variable Objetivo en la Transición
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Visualización del cambio en las densidades de clasificación al cruzar por el corredor compartido de ambos clústeres.
+                            </p>
+                        </div>
+
+                        <!-- Flow Diagram -->
+                        <div class="grid grid-cols-1 md:grid-cols-11 gap-4 items-center mt-6">
+                            
+                            <!-- State 1: Region A Exclusive (Only A) -->
+                            <div class="md:col-span-3 bg-slate-950/80 p-4 rounded-xl border border-blue-900/30 text-center relative">
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[9px] font-bold px-2.5 py-0.5 rounded-full tracking-wider whitespace-nowrap">
+                                    INICIO: SOLO CLÚSTER A
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-2">Excluyendo Clúster B</p>
+                                <div class="text-2xl font-black text-blue-300 mt-1" id="flow-count-a">0 <span class="text-xs font-normal text-slate-500">obs</span></div>
+                                
+                                <!-- Distribution Display -->
+                                <div id="flow-dist-a" class="mt-4 space-y-1.5"></div>
+                            </div>
+
+                            <!-- Connector 1 -->
+                            <div class="md:col-span-1 flex flex-col items-center justify-center text-slate-600 py-2">
+                                <i class="fa-solid fa-angles-right text-lg hidden md:block text-teal-500/40 animate-pulse"></i>
+                                <i class="fa-solid fa-angles-down text-lg md:hidden text-teal-500/40 animate-pulse"></i>
+                            </div>
+
+                            <!-- State 2: Intersection (The Bridge) -->
+                            <div class="md:col-span-3 bg-teal-950/10 p-4 rounded-xl border border-teal-500/30 text-center relative shadow-lg shadow-teal-950/10">
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-teal-400/20 border border-teal-400/40 text-teal-300 text-[9px] font-bold px-2.5 py-0.5 rounded-full tracking-wider whitespace-nowrap shadow-neon-teal">
+                                    INTERSECCIÓN (A ∩ B)
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-2">Corredor Compartido</p>
+                                <div class="text-2xl font-black text-teal-300 mt-1" id="flow-count-intersect">0 <span class="text-xs font-normal text-slate-500">obs</span></div>
+                                
+                                <!-- Distribution Display -->
+                                <div id="flow-dist-intersect" class="mt-4 space-y-1.5"></div>
+                            </div>
+
+                            <!-- Connector 2 -->
+                            <div class="md:col-span-1 flex flex-col items-center justify-center text-slate-600 py-2">
+                                <i class="fa-solid fa-angles-right text-lg hidden md:block text-teal-500/40 animate-pulse"></i>
+                                <i class="fa-solid fa-angles-down text-lg md:hidden text-teal-500/40 animate-pulse"></i>
+                            </div>
+
+                            <!-- State 3: Region B Exclusive (Only B) -->
+                            <div class="md:col-span-3 bg-slate-950/80 p-4 rounded-xl border border-rose-900/20 text-center relative">
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[9px] font-bold px-2.5 py-0.5 rounded-full tracking-wider whitespace-nowrap">
+                                    DESTINO: SOLO CLÚSTER B
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-2">Excluyendo Clúster A</p>
+                                <div class="text-2xl font-black text-rose-300 mt-1" id="flow-count-b">0 <span class="text-xs font-normal text-slate-500">obs</span></div>
+                                
+                                <!-- Distribution Display -->
+                                <div id="flow-dist-b" class="mt-4 space-y-1.5"></div>
+                            </div>
+
+                        </div>
+
+                        <!-- Analytical Summary -->
+                        <div class="mt-6 p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 flex gap-3">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-teal-400 text-sm">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-200 text-left">Interpretación Analítica y Validación de Hipótesis</h4>
+                                <p id="transition-insight-text" class="text-[11px] text-slate-400 mt-1 leading-relaxed text-left">
+                                    Cargando inferencia estadística de la distribución de clústeres...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+            </div>
+        </main>
     </div>
 
-    <h2 class="text-xl font-semibold mt-6">Configuración embebida</h2>
-    <pre class="text-xs bg-slate-900 p-4 rounded border border-slate-800 overflow-auto" id="payload"></pre>
-  </main>
-  <script>
-    const payload = {"dataset_config": {"dataset_id": "titania_sintetico", "feature_columns": ["temperature", "density", "hardness", "impurity_ratio"], "target_column": "grade", "id_column": "sample_id", "missing_strategy": "drop", "scaling_mode_default": "raw", "random_seed": 98765, "sampling_threshold": 2500, "sample_size": 2500, "sampling_strategy": "stratified", "target_mode": "classification", "regression_bins": 10}, "sampling_info": {"applied": false, "strategy": "none", "original_rows": 280, "final_rows": 280}, "target_mode_info": {"requested": "classification", "effective": "classification", "bins": 10}, "evaluation_config": {"primary_metric": "tvd", "min_samples_only_a": 5, "min_samples_only_b": 5, "ranking_order": "desc"}, "experiments": [{"id": 2, "name": "Matriz mecánica", "description": "Dureza y densidad", "target_column": "grade", "enabled": true, "tags": ["materials", "robustness"], "rules": {"intersection": [{"field": "density", "min": 6.4, "max": 10.5, "native": "raw"}], "only_cluster_a": [{"field": "hardness", "min": 1.5, "max": 3.0, "native": "raw"}], "only_cluster_b": [{"field": "hardness", "min": 3.1, "max": 5.6, "native": "raw"}]}}, {"id": 1, "name": "Pureza baja vs alta", "description": "Frontera por impureza", "target_column": "grade", "enabled": true, "tags": ["quality"], "rules": {"intersection": [{"field": "temperature", "min": 57, "max": 65, "native": "raw"}], "only_cluster_a": [{"field": "impurity_ratio", "min": 0.18, "max": 0.4, "native": "raw"}], "only_cluster_b": [{"field": "impurity_ratio", "min": 0.01, "max": 0.16, "native": "raw"}]}}], "ranking": [{"id": 2, "name": "Matriz mecánica", "tvd": 0.635013, "onlyA": 95, "intersection": 0, "onlyB": 141}, {"id": 1, "name": "Pureza baja vs alta", "tvd": 0.594949, "onlyA": 141, "intersection": 0, "onlyB": 98}]};
-    document.getElementById('payload').textContent = JSON.stringify(payload, null, 2);
-  </script>
+    <!-- Floating Tooltip -->
+    <div id="tooltip" class="absolute pointer-events-none opacity-0 bg-slate-900/95 border border-slate-750 p-3 rounded-lg shadow-xl text-xs text-slate-200 transition-opacity duration-200 z-50 backdrop-blur">
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/60 bg-slate-950/40 py-6 text-center text-xs text-slate-500">
+        <p>Iris Transition Explorer Pro • Análisis Avanzado de Estabilidad Multidimensional</p>
+    </footer>
+
+    <script>
+        // Set deterministic pseudo-random seed generator for data generation stability (LCG)
+        const runtimePayload = {"dataset_config": {"dataset_id": "titania_sintetico", "feature_columns": ["temperature", "density", "hardness", "impurity_ratio"], "target_column": "grade", "id_column": "sample_id", "missing_strategy": "drop", "scaling_mode_default": "raw", "random_seed": 98765, "sampling_threshold": 2500, "sample_size": 2500, "sampling_strategy": "stratified", "target_mode": "classification", "regression_bins": 10}, "sampling_info": {"applied": false, "strategy": "none", "original_rows": 280, "final_rows": 280}, "target_mode_info": {"requested": "classification", "effective": "classification", "bins": 10}, "evaluation_config": {"primary_metric": "tvd", "min_samples_only_a": 5, "min_samples_only_b": 5, "ranking_order": "desc"}, "experiments": [{"id": 2, "name": "Matriz mecánica", "description": "Dureza y densidad", "target_column": "grade", "enabled": true, "tags": ["materials", "robustness"], "rules": {"intersection": [{"field": "density", "min": 6.4, "max": 10.5, "native": "raw"}], "only_cluster_a": [{"field": "hardness", "min": 1.5, "max": 3.0, "native": "raw"}], "only_cluster_b": [{"field": "hardness", "min": 3.1, "max": 5.6, "native": "raw"}]}}, {"id": 1, "name": "Pureza baja vs alta", "description": "Frontera por impureza", "target_column": "grade", "enabled": true, "tags": ["quality"], "rules": {"intersection": [{"field": "temperature", "min": 57, "max": 65, "native": "raw"}], "only_cluster_a": [{"field": "impurity_ratio", "min": 0.18, "max": 0.4, "native": "raw"}], "only_cluster_b": [{"field": "impurity_ratio", "min": 0.01, "max": 0.16, "native": "raw"}]}}], "ranking": [{"id": 2, "name": "Matriz mecánica", "tvd": 0.635013, "onlyA": 95, "intersection": 0, "onlyB": 141}, {"id": 1, "name": "Pureza baja vs alta", "tvd": 0.594949, "onlyA": 141, "intersection": 0, "onlyB": 98}]};
+        let seed = 98765;
+        function random() {
+            let x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        // Gaussian Box-Muller generator for realistic synthetic Iris distributions
+        function randomNormal(mean, std) {
+            let u = 0, v = 0;
+            while(u === 0) u = random();
+            while(v === 0) v = random();
+            let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+            return num * std + mean;
+        }
+
+        // DEFAULT DATASET (Built-in Iris Dataset)
+        let activeDataset = [];
+        let featureNames = [];   // Numerical features detected in dataset
+        let targetColumn = '';   // Categorical target detected
+        let uniqueClasses = [];  // Unique categories of the target variable
+        let globalStats = {};    // Means and standard deviations for z-score calculations
+
+        const defaultSpeciesConfig = [
+            { name: "Setosa", count: 50, SL: [5.01, 0.35], SW: [3.43, 0.38], PL: [1.46, 0.17], PW: [0.25, 0.11] },
+            { name: "Versicolor", count: 50, SL: [5.94, 0.52], SW: [2.77, 0.31], PL: [4.26, 0.47], PW: [1.33, 0.20] },
+            { name: "Virginica", count: 50, SL: [6.59, 0.64], SW: [2.97, 0.32], PL: [5.55, 0.55], PW: [2.03, 0.27] }
+        ];
+
+        function generateIrisDataset() {
+            const list = [];
+            seed = 98765; // Reset seed
+            defaultSpeciesConfig.forEach(specie => {
+                for(let i=0; i<specie.count; i++) {
+                    list.push({
+                        id: `${specie.name.toLowerCase()}-${i}`,
+                        sepal_length: parseFloat(randomNormal(specie.SL[0], specie.SL[1]).toFixed(2)),
+                        sepal_width: parseFloat(randomNormal(specie.SW[0], specie.SW[1]).toFixed(2)),
+                        petal_length: parseFloat(randomNormal(specie.PL[0], specie.PL[1]).toFixed(2)),
+                        petal_width: parseFloat(randomNormal(specie.PW[0], specie.PW[1]).toFixed(2)),
+                        species: specie.name
+                    });
+                }
+            });
+            return list;
+        }
+
+        // Helper function to clone rules deep (Fixes the ReferenceError)
+        function cloneRules(rulesObj) {
+            return JSON.parse(JSON.stringify(rulesObj));
+        }
+
+        // POOL OF 30 PREDEFINED SCIENTIFIC EXPERIMENTS TO GENERALIZE AND STRETCH TEST BENCHMARKS
+        let experimentsPool = [
+            {
+                id: 1,
+                name: "Exp 1: Versicolor → Virginica (Petal Length Base)",
+                desc: "Transición típica en pétalos de tamaño medio a largo. Evalúa el cambio en la variable objetivo con sepal length estandarizado.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: 3.20, max: 5.80, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_length', min: -1.20, max: 0.40, native: 'scaled' }],
+                    only_cluster_b: [
+                        { field: 'sepal_length', min: 5.60, max: 7.20, native: 'raw' },
+                        { field: 'petal_width', min: 1.20, max: 2.40, native: 'raw' }
+                    ]
+                }
+            },
+            {
+                id: 2,
+                name: "Exp 2: Setosa → Versicolor (Sepal Length Base)",
+                desc: "Aislamiento de la frontera en flores con sépalos más cortos. Ajusta para encontrar la pureza de Setosa versus Versicolor.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 4.40, max: 5.60, native: 'raw' }],
+                    only_cluster_a: [
+                        { field: 'sepal_width', min: 0.00, max: 2.20, native: 'scaled' },
+                        { field: 'petal_length', min: 1.00, max: 1.90, native: 'raw' }
+                    ],
+                    only_cluster_b: [
+                        { field: 'sepal_width', min: 2.00, max: 3.10, native: 'raw' },
+                        { field: 'petal_length', min: 1.40, max: 4.50, native: 'raw' }
+                    ]
+                }
+            },
+            {
+                id: 3,
+                name: "Exp 3: Virginica → Versicolor (Ancho de Pétalo)",
+                desc: "Análisis inverso evaluando el decrecimiento morfométrico floral a través del ancho del pétalo.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_width', min: 1.00, max: 2.10, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 4.50, max: 6.90, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 3.00, max: 4.90, native: 'raw' }]
+                }
+            },
+            {
+                id: 4,
+                name: "Exp 4: Setosa Extrema (Filtro Sepal Width)",
+                desc: "Evalúa si un rango físico restrictivo y ancho en sépalos logra purificar y separar Setosa de manera extrema.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: 2.80, max: 4.40, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 1.00, max: 1.70, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 1.50, max: 5.20, native: 'raw' }]
+                }
+            },
+            {
+                id: 5,
+                name: "Exp 5: Sépalo Angosto vs Longitud de Pétalos",
+                desc: "Análisis estructural multidimensional para clasificaciones complejas con variables correlacionadas negativamente.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: -1.50, max: 0.50, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 1.00, max: 4.20, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 3.80, max: 6.90, native: 'raw' }]
+                }
+            },
+            {
+                id: 6,
+                name: "Exp 6: Transición de Corredor de Pétalo Medio",
+                desc: "Aislamiento morfológico híbrido de pétalos entre 2.5 y 5.5 cm de longitud.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: 2.50, max: 5.50, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_length', min: 4.80, max: 6.20, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_length', min: 5.80, max: 7.50, native: 'raw' }]
+                }
+            },
+            {
+                id: 7,
+                name: "Exp 7: Híbrido Ancho (Eje Sepal Width)",
+                desc: "Mide la estabilidad taxonómica al fijar anchos de sépalos muy anchos.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: 3.00, max: 4.50, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_width', min: 0.10, max: 0.60, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_width', min: 0.40, max: 2.50, native: 'raw' }]
+                }
+            },
+            {
+                id: 8,
+                name: "Exp 8: Filtro General de Robustez en Desviaciones",
+                desc: "Experimento de amplio espectro enfocado exclusivamente en restricciones Z-score.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: -1.50, max: 1.50, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'petal_length', min: -1.60, max: -0.20, native: 'scaled' }],
+                    only_cluster_b: [{ field: 'petal_length', min: -0.40, max: 1.60, native: 'scaled' }]
+                }
+            },
+            {
+                id: 9,
+                name: "Exp 9: Micro-Límites de Densidad (Petal Width)",
+                desc: "Aislamiento micrométrico de la estabilidad biológica en la frontera de pétalos sumamente angostos.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_width', min: 0.10, max: 1.60, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_length', min: 4.30, max: 5.30, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_length', min: 4.90, max: 6.80, native: 'raw' }]
+                }
+            },
+            {
+                id: 10,
+                name: "Exp 10: Súper Sépalo vs Súper Pétalo",
+                desc: "Análisis extremo de dimensiones gigantes en ambos órganos florales.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 5.20, max: 7.90, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 1.20, max: 4.80, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 4.50, max: 7.00, native: 'raw' }]
+                }
+            },
+            {
+                id: 11,
+                name: "Exp 11: Z-Score Completo sobre Pétalos",
+                desc: "Usa el espacio Z del pétalo para predecir si el cambio morfométrico colapsa en la transición.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_width', min: -1.20, max: 1.20, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'petal_length', min: -1.50, max: 0.20, native: 'scaled' }],
+                    only_cluster_b: [{ field: 'petal_length', min: -0.10, max: 1.50, native: 'scaled' }]
+                }
+            },
+            {
+                id: 12,
+                name: "Exp 12: Fronteras de Baja Representación",
+                desc: "Fuerza la creación de zonas donde muy pocos especímenes cumplen las reglas para evaluar la consistencia.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: 2.20, max: 3.20, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 1.00, max: 3.00, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 5.00, max: 7.00, native: 'raw' }]
+                }
+            },
+            // EXPERIEMENTOS ADICIONALES PARA LLEGAR A LOS 30
+            {
+                id: 13,
+                name: "Exp 13: Separación Óptima de Setosa (TVD Alto)",
+                desc: "Maximiza de forma pura el TVD aislando Setosa de forma estricta usando límites restrictivos físicos.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: 1.00, max: 5.00, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_width', min: 0.10, max: 0.60, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_width', min: 1.00, max: 2.50, native: 'raw' }]
+                }
+            },
+            {
+                id: 14,
+                name: "Exp 14: Sépalo Ancho (Pureza en Límite Z)",
+                desc: "Usa la dimensión estandarizada de Sepal Width para analizar la mezcla central de especies.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: -0.50, max: 2.00, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'petal_width', min: 0.10, max: 1.30, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_width', min: 1.40, max: 2.50, native: 'raw' }]
+                }
+            },
+            {
+                id: 15,
+                name: "Exp 15: Mezcla Total (TVD Muy Bajo)",
+                desc: "Diseñado intencionalmente para exhibir un TVD cercano a 0 evaluando la hipótesis nula.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 5.50, max: 6.50, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_width', min: -0.80, max: 0.00, native: 'scaled' }],
+                    only_cluster_b: [{ field: 'sepal_width', min: -0.79, max: 0.10, native: 'scaled' }]
+                }
+            },
+            {
+                id: 16,
+                name: "Exp 16: Transición Rápida de Hojas (Petal Length)",
+                desc: "Análisis morfométrico de transición en hojas de tamaño intermedio.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: 3.00, max: 5.10, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_width', min: 2.00, max: 2.80, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_width', min: 2.90, max: 3.80, native: 'raw' }]
+                }
+            },
+            {
+                id: 17,
+                name: "Exp 17: Filtro Z de Variabilidad Extrema",
+                desc: "Prueba el comportamiento transicional bajo límites Z en desviaciones estándar extremas de sepal length.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: -2.00, max: 2.00, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'sepal_width', min: 3.20, max: 4.40, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_width', min: 2.00, max: 2.90, native: 'raw' }]
+                }
+            },
+            {
+                id: 18,
+                name: "Exp 18: Solapamiento Fino (Fase de Frontera)",
+                desc: "Analiza el corredor estrecho que divide a Versicolor de Virginica.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: 4.50, max: 5.10, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_length', min: 5.00, max: 6.20, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_length', min: 6.30, max: 7.90, native: 'raw' }]
+                }
+            },
+            {
+                id: 19,
+                name: "Exp 19: Robustez General de Órganos Florales",
+                desc: "Evalúa límites multidimensionales amplios de pétalos y sépalos conjuntos.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: 2.50, max: 3.50, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: -1.50, max: -0.50, native: 'scaled' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 0.10, max: 1.50, native: 'scaled' }]
+                }
+            },
+            {
+                id: 20,
+                name: "Exp 20: Filtro de Espécimen Gigante (Sepal L > 6.5)",
+                desc: "Aísla flores muy grandes y estudia cómo se comportan sus órganos reproductivos en la clasificación.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 6.50, max: 7.90, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 4.00, max: 5.30, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 5.40, max: 7.00, native: 'raw' }]
+                }
+            },
+            {
+                id: 21,
+                name: "Exp 21: Mapeo Espacial de Pétalo Fino",
+                desc: "Prueba de hipótesis enfocada en el ancho de pétalos muy angostos para aislar Setosa.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_width', min: 0.10, max: 0.80, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_length', min: -1.50, max: -0.20, native: 'scaled' }],
+                    only_cluster_b: [{ field: 'sepal_length', min: -0.10, max: 1.50, native: 'scaled' }]
+                }
+            },
+            {
+                id: 22,
+                name: "Exp 22: Densidad en Eje Central de Ancho",
+                desc: "Filtra la densidad en el centro de la distribución usando anchos de sépalos medios.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: 2.60, max: 3.40, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 1.00, max: 3.50, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 4.80, max: 6.90, native: 'raw' }]
+                }
+            },
+            {
+                id: 23,
+                name: "Exp 23: Sépalo Largo con Pétalo Variable",
+                desc: "Analiza especímenes de sépalo muy largo y examina si la transición se mantiene polarizada.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 0.50, max: 2.20, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'petal_width', min: 1.00, max: 1.60, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_width', min: 1.70, max: 2.50, native: 'raw' }]
+                }
+            },
+            {
+                id: 24,
+                name: "Exp 24: Corredor Asimétrico (Transición Sesgada)",
+                desc: "Diseño asimétrico con límites desiguales para probar la estabilidad matemática del TVD.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: 3.00, max: 6.00, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_width', min: 2.00, max: 2.70, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_width', min: 2.80, max: 3.60, native: 'raw' }]
+                }
+            },
+            {
+                id: 25,
+                name: "Exp 25: Desviaciones Standard Mixtas (Sepal / Petal)",
+                desc: "Evalúa el comportamiento híbrido de métricas Z cruzadas de sépalo y pétalo.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_width', min: -1.00, max: 1.00, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'petal_width', min: -1.50, max: -0.20, native: 'scaled' }],
+                    only_cluster_b: [{ field: 'petal_width', min: -0.10, max: 1.50, native: 'scaled' }]
+                }
+            },
+            {
+                id: 26,
+                name: "Exp 26: Aislamiento Completo de Virginica",
+                desc: "Intenta aislar de manera pura la especie Virginica de las otras dos mediante límites de gran tamaño.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: 4.00, max: 6.90, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_width', min: 1.00, max: 1.70, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_width', min: 1.80, max: 2.50, native: 'raw' }]
+                }
+            },
+            {
+                id: 27,
+                name: "Exp 27: Micro-Espacio de Alta Concentración",
+                desc: "Límites sumamente estrechos en el clúster central para testear baja presencia de observaciones.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 5.40, max: 5.80, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_width', min: 2.50, max: 2.90, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_width', min: 3.00, max: 3.50, native: 'raw' }]
+                }
+            },
+            {
+                id: 28,
+                name: "Exp 28: Filtro Z de Pétalo Extremo",
+                desc: "Análisis con filtros Z de pétalo en límites extremos de variación.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'petal_length', min: -2.00, max: 2.00, native: 'scaled' }],
+                    only_cluster_a: [{ field: 'sepal_length', min: -1.50, max: 0.00, native: 'scaled' }],
+                    only_cluster_b: [{ field: 'sepal_length', min: 0.10, max: 1.50, native: 'scaled' }]
+                }
+            },
+            {
+                id: 29,
+                name: "Exp 29: Frontera Difusa Setosa/Virginica",
+                desc: "Evalúa qué sucede cuando no hay continuidad física real entre los extremos A y B (clases disjuntas).",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 4.90, max: 6.50, native: 'raw' }],
+                    only_cluster_a: [{ field: 'petal_length', min: 1.00, max: 1.70, native: 'raw' }],
+                    only_cluster_b: [{ field: 'petal_length', min: 5.20, max: 6.90, native: 'raw' }]
+                }
+            },
+            {
+                id: 30,
+                name: "Exp 30: Sépalo Pequeño (Filtro General Físico)",
+                desc: "Analiza el comportamiento morfométrico final en flores pequeñas de menos de 5.2 cm de sépalo.",
+                target_column: "species",
+                rules: {
+                    intersection: [{ field: 'sepal_length', min: 4.30, max: 5.20, native: 'raw' }],
+                    only_cluster_a: [{ field: 'sepal_width', min: 2.90, max: 4.20, native: 'raw' }],
+                    only_cluster_b: [{ field: 'sepal_width', min: 2.00, max: 2.80, native: 'raw' }]
+                }
+            }
+        ];
+
+        // Global State variables
+        let currentExperimentId = 1;
+        let isScaledMode = true; 
+        let activeRules = {};
+
+        // Animation State Variables
+        let isSimPlaying = false;
+        let simT = 0; // 0 to 100 representing the timeline
+        let simInterval = null;
+
+        // IN-APP NOTIFICATION TOAST
+        function showToast(message) {
+            const toast = document.getElementById("toast-container");
+            const text = document.getElementById("toast-text");
+            text.textContent = message;
+            toast.classList.remove("hidden");
+            setTimeout(hideToast, 5000);
+        }
+
+        function hideToast() {
+            document.getElementById("toast-container").classList.add("hidden");
+        }
+
+        // STATS AND SCALING ENGINE
+        function calculateDatasetStats() {
+            globalStats = {};
+            featureNames.forEach(feature => {
+                const values = activeDataset.map(d => d[feature]);
+                const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+                const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+                const std = Math.sqrt(variance) || 1;
+                globalStats[feature] = { mean, std };
+            });
+
+            // Map Scaled properties dynamically
+            activeDataset.forEach(d => {
+                d.scaled = {};
+                featureNames.forEach(feature => {
+                    const stats = globalStats[feature];
+                    d.scaled[feature] = parseFloat(((d[feature] - stats.mean) / stats.std).toFixed(2));
+                });
+            });
+        }
+
+        // EVALUATION LOGIC
+        function evaluateRule(point, rule) {
+            const val = rule.native === 'scaled' ? point.scaled[rule.field] : point[rule.field];
+            return val >= rule.min && val <= rule.max;
+        }
+
+        // Helper function to hide the floating tooltip (Fixes the ReferenceError)
+        function hideTooltip() {
+            const el = document.getElementById("tooltip");
+            if (el) {
+                el.style.opacity = "0";
+            }
+        }
+
+        function evaluateRuleSet(point, ruleList) {
+            if (!ruleList || ruleList.length === 0) return false;
+            return ruleList.every(rule => evaluateRule(point, rule));
+        }
+
+        // Categorize points into disjoint regions using intersection logic
+        function classifyPoint(point) {
+            const matchesIntersection = evaluateRuleSet(point, activeRules.intersection);
+            const matchesA = evaluateRuleSet(point, activeRules.only_cluster_a);
+            const matchesB = evaluateRuleSet(point, activeRules.only_cluster_b);
+
+            const inClusterA = matchesIntersection && matchesA;
+            const inClusterB = matchesIntersection && matchesB;
+
+            return {
+                isIntersection: inClusterA && inClusterB,
+                isOnlyA: inClusterA && !inClusterB,
+                isOnlyB: inClusterB && !inClusterA,
+                isRegionA: inClusterA,
+                isRegionB: inClusterB
+            };
+        }
+
+        // MATH METRIC: Total Variation Distance (TVD - Delta)
+        function calculateTVD(stats) {
+            const countA = stats.onlyA.count;
+            const countB = stats.onlyB.count;
+
+            if (countA === 0 || countB === 0) return 0; // Prevent division by zero or empty-state errors
+
+            let sumAbsoluteDiff = 0;
+            uniqueClasses.forEach(c => {
+                const probA = stats.onlyA.dist[c] / countA;
+                const probB = stats.onlyB.dist[c] / countB;
+                sumAbsoluteDiff += Math.abs(probA - probB);
+            });
+
+            return 0.5 * sumAbsoluteDiff;
+        }
+
+        // Stats aggregator for active classifications
+        function getSegmentStatsForRules(rulesSet) {
+            let countOnlyA = 0;
+            let countOnlyB = 0;
+            let countIntersection = 0;
+            
+            const distOnlyA = {};
+            const distOnlyB = {};
+            const distIntersection = {};
+
+            uniqueClasses.forEach(c => {
+                distOnlyA[c] = 0;
+                distOnlyB[c] = 0;
+                distIntersection[c] = 0;
+            });
+
+            activeDataset.forEach(d => {
+                const matchesIntersection = evaluateRuleSet(d, rulesSet.intersection);
+                const matchesA = evaluateRuleSet(d, rulesSet.only_cluster_a);
+                const matchesB = evaluateRuleSet(d, rulesSet.only_cluster_b);
+
+                const inClusterA = matchesIntersection && matchesA;
+                const inClusterB = matchesIntersection && matchesB;
+
+                const isIntersection = inClusterA && inClusterB;
+                const isOnlyA = inClusterA && !inClusterB;
+                const isOnlyB = inClusterB && !inClusterA;
+
+                const targetVal = d[targetColumn];
+
+                if (isOnlyA) {
+                    countOnlyA++;
+                    if (distOnlyA[targetVal] !== undefined) distOnlyA[targetVal]++;
+                } else if (isOnlyB) {
+                    countOnlyB++;
+                    if (distOnlyB[targetVal] !== undefined) distOnlyB[targetVal]++;
+                } else if (isIntersection) {
+                    countIntersection++;
+                    if (distIntersection[targetVal] !== undefined) distIntersection[targetVal]++;
+                }
+            });
+
+            return {
+                onlyA: { count: countOnlyA, dist: distOnlyA },
+                onlyB: { count: countOnlyB, dist: distOnlyB },
+                intersection: { count: countIntersection, dist: distIntersection }
+            };
+        }
+
+        // RE-POPULATE AND CALCULATE RANKING OF HYPOTHESES (LEADERBOARD)
+        function updateLeaderboard() {
+            const tbody = document.getElementById("leaderboard-body");
+            tbody.innerHTML = '';
+
+            // Calculate TVD metrics for each experiment in the pool
+            const rankedList = experimentsPool.map(exp => {
+                const stats = getSegmentStatsForRules(exp.rules);
+                const delta = calculateTVD(stats);
+                const totalMuestras = stats.onlyA.count + stats.intersection.count + stats.onlyB.count;
+                return { exp, delta, stats, totalMuestras };
+            });
+
+            // Sort descending by Delta (TVD)
+            rankedList.sort((a, b) => b.delta - a.delta);
+
+            rankedList.forEach(item => {
+                const isActive = item.exp.id === currentExperimentId;
+                const row = document.createElement("tr");
+                row.className = `cursor-pointer transition-colors ${isActive ? 'bg-indigo-950/40 text-indigo-200 border-l-2 border-teal-500 font-medium' : 'hover:bg-slate-900/40 text-slate-300'}`;
+                row.onclick = () => selectExperiment(item.exp.id);
+
+                let stateBadge = '';
+                if (item.delta >= 0.8) {
+                    stateBadge = '<span class="text-[9px] bg-teal-500/10 text-teal-300 px-1 py-0.2 rounded font-bold">Excelente 🔥</span>';
+                } else if (item.delta >= 0.5) {
+                    stateBadge = '<span class="text-[9px] bg-blue-500/10 text-blue-300 px-1 py-0.2 rounded font-semibold">Moderada ⚡</span>';
+                } else {
+                    stateBadge = '<span class="text-[9px] bg-slate-800 text-slate-500 px-1 py-0.2 rounded">Débil ❄️</span>';
+                }
+
+                row.innerHTML = `
+                    <td class="py-2 px-3 font-bold">${item.exp.id}</td>
+                    <td class="py-2 px-2 max-w-[150px] truncate">
+                        <div class="font-semibold">${item.exp.name}</div>
+                        <div class="text-[8px] text-slate-500 truncate">${item.exp.desc}</div>
+                    </td>
+                    <td class="py-2 px-2 text-center font-mono">
+                        <div class="font-extrabold text-teal-300">${item.delta.toFixed(3)}</div>
+                        <div class="mt-0.5">${stateBadge}</div>
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono text-[9px] text-slate-400">
+                        ${item.stats.onlyA.count} | ${item.stats.intersection.count} | ${item.stats.onlyB.count}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // CSV PARSER FOR ARBITRARY DATASETS
+        function handleCSVUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCSV(text);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+            if (lines.length < 2) {
+                showToast("El archivo CSV debe contener al menos una cabecera y una fila de datos.");
+                return;
+            }
+
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                if (values.length === headers.length) {
+                    const obj = {};
+                    headers.forEach((h, idx) => {
+                        const rawVal = values[idx];
+                        const numVal = parseFloat(rawVal);
+                        obj[h] = isNaN(numVal) ? rawVal : numVal;
+                    });
+                    rows.push(obj);
+                }
+            }
+
+            if (rows.length === 0) {
+                showToast("No se pudieron extraer filas consistentes del CSV.");
+                return;
+            }
+
+            const numericFeatures = [];
+            let categoricalTarget = '';
+
+            headers.forEach(h => {
+                const isNumeric = rows.every(r => typeof r[h] === 'number');
+                if (isNumeric) {
+                    numericFeatures.push(h);
+                } else {
+                    if (!categoricalTarget) categoricalTarget = h;
+                }
+            });
+
+            if (numericFeatures.length < 2) {
+                showToast("Se necesitan al menos 2 variables numéricas en el dataset.");
+                return;
+            }
+
+            if (!categoricalTarget) {
+                categoricalTarget = numericFeatures.pop();
+            }
+
+            // Update App state with uploaded custom dataset
+            activeDataset = rows;
+            featureNames = numericFeatures;
+            targetColumn = categoricalTarget;
+            
+            uniqueClasses = [...new Set(activeDataset.map(d => d[targetColumn]))];
+
+            document.getElementById("data-badge").textContent = `Dataset: Personalizado (${activeDataset.length} filas)`;
+            
+            // Build dynamic UI controls
+            rebuildAxisSelectors();
+            calculateDatasetStats();
+            generateGenericExperimentsForUploadedData();
+            selectExperiment(experimentsPool[0].id);
+
+            showToast("¡Dataset CSV cargado con éxito! Auto-detectadas " + featureNames.length + " dimensiones.");
+        }
+
+        function restoreDefaultIris() {
+            activeDataset = generateIrisDataset();
+            featureNames = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+            targetColumn = 'species';
+            uniqueClasses = ["Setosa", "Versicolor", "Virginica"];
+
+            document.getElementById("data-badge").textContent = "Dataset: Base (Defecto)";
+
+            rebuildAxisSelectors();
+            calculateDatasetStats();
+
+            // Restore original pool of 30 Iris experiments
+            experimentsPool = experimentsPool.slice(0, 30); // Preserves original array reference
+
+            selectExperiment(1);
+            showToast("¡Iris Dataset restaurado con éxito!");
+        }
+
+        // GENERATE DYNAMIC EXPERIMENTS FOR ANY CUSTOM CSV
+        function generateGenericExperimentsForUploadedData() {
+            experimentsPool = [];
+            
+            const f1 = featureNames[0];
+            const f2 = featureNames[1];
+            const f3 = featureNames[2] || f1;
+
+            const stats1 = globalStats[f1];
+            const stats2 = globalStats[f2];
+            const stats3 = globalStats[f3];
+
+            // Build 15 dynamic balanced transitional experiments
+            for (let i = 1; i <= 15; i++) {
+                const fraction = i / 16;
+                const minCut = stats1.mean - (1.5 * stats1.std * fraction);
+                const maxCut = stats1.mean + (1.5 * stats1.std * fraction);
+                
+                experimentsPool.push({
+                    id: i,
+                    name: `Experimento Personalizado ${i}: Corte de ${f1.replace('_', ' ')}`,
+                    desc: `Evaluación de cambio estructural en variable objetivo filtrando dimensiones lógicas mediante cortes sobre ${f1}.`,
+                    target_column: targetColumn,
+                    rules: {
+                        intersection: [
+                            { field: f1, min: minCut, max: maxCut, native: 'raw' }
+                        ],
+                        only_cluster_a: [
+                            { field: f2, min: -1.2, max: 0.2, native: 'scaled' }
+                        ],
+                        only_cluster_b: [
+                            { field: f2, min: stats2.mean + (0.05 * stats2.std), max: stats2.mean + (2.2 * stats2.std), native: 'raw' },
+                            { field: f3, min: stats3.mean - (2.0 * stats3.std), max: stats3.mean + (2.0 * stats3.std), native: 'raw' }
+                        ]
+                    }
+                });
+            }
+        }
+
+        // JSON EXPERIMENT POOL UPLOADER
+        function handleJSONUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = e => {
+                try {
+                    const pool = JSON.parse(e.target.result);
+                    if (!Array.isArray(pool) || pool.length === 0) {
+                        showToast("El archivo JSON de experimentos debe ser una lista Array estructurada.");
+                        return;
+                    }
+
+                    const valid = pool.every(exp => exp.id && exp.name && exp.rules);
+                    if (!valid) {
+                        showToast("Cada experimento en el JSON requiere al menos un 'id', 'name' y un objeto 'rules'.");
+                        return;
+                    }
+
+                    experimentsPool = pool;
+                    selectExperiment(experimentsPool[0].id);
+                    showToast("¡Módulo cargado con " + pool.length + " nuevas hipótesis personalizadas!");
+
+                } catch (err) {
+                    showToast("Error al decodificar el archivo JSON de hipótesis: " + err.message);
+                }
+            };
+
+            const actualReader = new FileReader();
+            actualReader.onload = reader;
+            actualReader.readAsText(file);
+        }
+
+        function rebuildAxisSelectors() {
+            const selX = document.getElementById("sel-axis-x");
+            const selY = document.getElementById("sel-axis-y");
+            selX.innerHTML = '';
+            selY.innerHTML = '';
+
+            featureNames.forEach((feat, idx) => {
+                const optX = document.createElement("option");
+                optX.value = feat;
+                optX.textContent = feat.replace('_', ' ');
+                if(idx === 1) optX.selected = true;
+                selX.appendChild(optX);
+
+                const optY = document.createElement("option");
+                optY.value = feat;
+                optY.textContent = feat.replace('_', ' ');
+                if(idx === 0) optY.selected = true;
+                selY.appendChild(optY);
+            });
+
+            // Rebuild class legends in scatter plot footer
+            const legendContainer = document.getElementById("scatter-classes-legend");
+            legendContainer.innerHTML = '';
+            
+            const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-purple-500'];
+            uniqueClasses.forEach((c, idx) => {
+                const color = colors[idx % colors.length];
+                legendContainer.innerHTML += `
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full ${color}"></span>
+                        <span class="text-slate-300 font-sans">${c}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // COORDINATES MAPS & PLOTS (2D Scatter Plot)
+        function drawScatter() {
+            const svg = document.getElementById("scatter-svg");
+            if (!svg) return;
+            svg.innerHTML = ''; 
+
+            const xField = document.getElementById("sel-axis-x").value;
+            const yField = document.getElementById("sel-axis-y").value;
+
+            if(!xField || !yField) return;
+
+            const width = svg.clientWidth || 600;
+            const height = svg.clientHeight || 450;
+            const margin = { top: 35, right: 35, bottom: 50, left: 55 };
+
+            const xValues = activeDataset.map(d => isScaledMode ? d.scaled[xField] : d[xField]);
+            const yValues = activeDataset.map(d => isScaledMode ? d.scaled[yField] : d[yField]);
+
+            const xMin = Math.min(...xValues) - 0.2;
+            const xMax = Math.max(...xValues) + 0.2;
+            const yMin = Math.min(...yValues) - 0.2;
+            const yMax = Math.max(...yValues) + 0.2;
+
+            // Render Axis, Grids & Ticks
+            let grids = '';
+            
+            // X Ticks
+            const xTicksCount = 5;
+            for(let i=0; i<=xTicksCount; i++) {
+                const tickVal = xMin + (i / xTicksCount) * (xMax - xMin);
+                const cx = mapCoord(tickVal, xMin, xMax, margin.left, width - margin.right);
+                grids += `
+                    <line x1="${cx}" y1="${margin.top}" x2="${cx}" y2="${height - margin.bottom}" stroke="#161e30" stroke-dasharray="2 2" />
+                    <text x="${cx}" y="${height - margin.bottom + 18}" fill="#64748b" font-size="9" text-anchor="middle" font-family="monospace">
+                        ${tickVal.toFixed(1)}
+                    </text>
+                `;
+            }
+
+            // Y Ticks
+            const yTicksCount = 5;
+            for(let i=0; i<=yTicksCount; i++) {
+                const tickVal = yMin + (i / yTicksCount) * (yMax - yMin);
+                const cy = mapCoord(tickVal, yMin, yMax, margin.top, height - margin.bottom, true);
+                grids += `
+                    <line x1="${margin.left}" y1="${cy}" x2="${width - margin.right}" y2="${cy}" stroke="#161e30" stroke-dasharray="2 2" />
+                    <text x="${margin.left - 10}" y="${cy + 3}" fill="#64748b" font-size="9" text-anchor="end" font-family="monospace">
+                        ${tickVal.toFixed(1)}
+                    </text>
+                `;
+            }
+
+            // Axes Labels
+            const scaleLabel = isScaledMode ? '(Z-Score Normalizado)' : '(Valor Físico)';
+            grids += `
+                <text x="${width/2}" y="${height - 12}" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle" class="uppercase tracking-wider">
+                    ${xField.replace('_', ' ')} ${scaleLabel}
+                </text>
+                <text x="14" y="${height/2}" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle" transform="rotate(-90 14 ${height/2})" class="uppercase tracking-wider">
+                    ${yField.replace('_', ' ')} ${scaleLabel}
+                </text>
+            `;
+
+            svg.innerHTML += `<g id="axes-and-grids">${grids}</g>`;
+
+            // Helper to project native rule boundaries to the current layout coordinate scale
+            function projectRuleLimits(ruleList, field) {
+                let rMin = -Infinity;
+                let rMax = Infinity;
+                let activeRestriction = false;
+
+                ruleList.forEach(rule => {
+                    if (rule.field === field) {
+                        activeRestriction = true;
+                        
+                        let ruleMinTransformed = rule.min;
+                        let ruleMaxTransformed = rule.max;
+
+                        const stats = globalStats[field];
+
+                        if (rule.native === 'scaled' && !isScaledMode) {
+                            ruleMinTransformed = rule.min * stats.std + stats.mean;
+                            ruleMaxTransformed = rule.max * stats.std + stats.mean;
+                        } else if (rule.native === 'raw' && isScaledMode) {
+                            ruleMinTransformed = (rule.min - stats.mean) / stats.std;
+                            ruleMaxTransformed = (rule.max - stats.mean) / stats.std;
+                        }
+
+                        rMin = Math.max(rMin, ruleMinTransformed);
+                        rMax = Math.min(rMax, ruleMaxTransformed);
+                    }
+                });
+
+                return { min: rMin, max: rMax, active: activeRestriction };
+            }
+
+            const drawA = document.getElementById("chk-draw-a")?.checked ?? true;
+            const drawB = document.getElementById("chk-draw-b")?.checked ?? true;
+            const drawInt = document.getElementById("chk-draw-int")?.checked ?? true;
+
+            const regionsToDraw = [];
+            if (drawA) {
+                regionsToDraw.push({ 
+                    rules: [...activeRules.intersection, ...activeRules.only_cluster_a], 
+                    color: "#3b82f6", 
+                    label: "Región Clúster A", 
+                    opacity: 0.04
+                });
+            }
+            if (drawB) {
+                regionsToDraw.push({ 
+                    rules: [...activeRules.intersection, ...activeRules.only_cluster_b], 
+                    color: "#f43f5e", 
+                    label: "Región Clúster B", 
+                    opacity: 0.04
+                });
+            }
+            if (drawInt) {
+                regionsToDraw.push({ 
+                    rules: [...activeRules.intersection, ...activeRules.only_cluster_a, ...activeRules.only_cluster_b], 
+                    color: "#14b8a6", 
+                    label: "Intersección A ∩ B", 
+                    opacity: 0.15,
+                    borderWidth: 2,
+                    isIntersectionLayer: true
+                });
+            }
+
+            let overlays = '';
+            regionsToDraw.forEach(reg => {
+                const xProjection = projectRuleLimits(reg.rules, xField);
+                const yProjection = projectRuleLimits(reg.rules, yField);
+
+                const limitX0 = xProjection.active ? xProjection.min : xMin;
+                const limitX1 = xProjection.active ? xProjection.max : xMax;
+                const limitY0 = yProjection.active ? yProjection.min : yMin;
+                const limitY1 = yProjection.active ? yProjection.max : yMax;
+
+                if (limitX1 >= limitX0 && limitY1 >= limitY0) {
+                    const xStart = mapCoord(limitX0, xMin, xMax, margin.left, width - margin.right);
+                    const xEnd = mapCoord(limitX1, xMin, xMax, margin.left, width - margin.right);
+                    const yStart = mapCoord(limitY1, yMin, yMax, margin.top, height - margin.bottom, true);
+                    const yEnd = mapCoord(limitY0, yMin, yMax, margin.top, height - margin.bottom, true);
+
+                    const rWidth = Math.max(1, Math.abs(xEnd - xStart));
+                    const rHeight = Math.max(1, Math.abs(yEnd - yStart));
+                    const rX = Math.min(xStart, xEnd);
+                    const rY = Math.min(yStart, yEnd);
+
+                    if (xProjection.active || yProjection.active) {
+                        const borderStyle = reg.isIntersectionLayer ? 'stroke-dasharray="0"' : 'stroke-dasharray="3 3"';
+                        const borderWidth = reg.borderWidth || 1.5;
+                        overlays += `
+                            <g class="transition-all duration-300">
+                                <rect x="${rX}" y="${rY}" width="${rWidth}" height="${rHeight}" 
+                                      fill="${reg.color}" fill-opacity="${reg.opacity}" 
+                                      stroke="${reg.color}" stroke-opacity="0.75" stroke-width="${borderWidth}" ${borderStyle} />
+                                <rect x="${rX}" y="${rY}" width="${rWidth}" height="15" 
+                                      fill="${reg.color}" fill-opacity="0.15" />
+                                <text x="${rX + 6}" y="${rY + 11}" fill="${reg.color}" font-size="8" font-weight="800" class="uppercase tracking-wider font-sans">
+                                    ${reg.label}
+                                </text>
+                            </g>
+                        `;
+                    }
+                }
+            });
+            svg.innerHTML += `<g id="rule-overlays">${overlays}</g>`;
+
+            // Draw scatter dots representing real dataset samples
+            let pointsHtml = '';
+            const colors = ['#6366f1', '#10b981', '#ec4899', '#f59e0b', '#14b8a6', '#a855f7'];
+
+            activeDataset.forEach(d => {
+                const xVal = isScaledMode ? d.scaled[xField] : d[xField];
+                const yVal = isScaledMode ? d.scaled[yField] : d[yField];
+
+                const cx = mapCoord(xVal, xMin, xMax, margin.left, width - margin.right);
+                const cy = mapCoord(yVal, yMin, yMax, margin.top, height - margin.bottom, true);
+
+                const status = classifyPoint(d);
+                
+                const classIdx = uniqueClasses.indexOf(d[targetColumn]);
+                const colorClass = colors[classIdx % colors.length];
+
+                let r = 4.5;
+                let stroke = "none";
+                let strokeWidth = 0;
+                let opacity = 0.35;
+                let filterEffect = "";
+
+                if (status.isIntersection) {
+                    r = 7.5;
+                    stroke = "#14b8a6";
+                    strokeWidth = 2.5;
+                    opacity = 1.0;
+                    filterEffect = "drop-shadow(0 0 4px #14b8a6)";
+                } else if (status.isOnlyA) {
+                    r = 6.5;
+                    stroke = "#3b82f6";
+                    strokeWidth = 2;
+                    opacity = 0.9;
+                } else if (status.isOnlyB) {
+                    r = 6.5;
+                    stroke = "#f43f5e";
+                    strokeWidth = 2;
+                    opacity = 0.9;
+                }
+
+                // Protect JSON serialization for attributes
+                const serializedData = JSON.stringify(d).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                pointsHtml += `
+                    <circle cx="${cx}" cy="${cy}" r="${r}" 
+                            fill="${colorClass}" 
+                            fill-opacity="${opacity}" 
+                            stroke="${stroke}" 
+                            stroke-width="${strokeWidth}"
+                            style="filter: ${filterEffect};"
+                            class="glow-dot cursor-pointer"
+                            onmouseover="showScatterTooltip(event, '${d[targetColumn]}', '${d.id}', ${serializedData}, '${status.isIntersection ? 'A ∩ B' : status.isOnlyA ? 'Solo Clúster A' : status.isOnlyB ? 'Solo Clúster B' : 'Ninguno'}')"
+                            onmouseout="hideTooltip()" />
+                `;
+            });
+
+            // ADD ANIMATED PULSATING BEAD IN THE 2D SCATTER PLOT
+            const stats = getSegmentStatsForRules(activeRules);
+            const p = simT / 100;
+            const interpolatedCoords = getInterpolatedFeatures(p, stats);
+            
+            if (interpolatedCoords && interpolatedCoords[xField] !== undefined && interpolatedCoords[yField] !== undefined) {
+                const virtualX = isScaledMode ? 
+                    ((interpolatedCoords[xField] - globalStats[xField].mean) / globalStats[xField].std) : 
+                    interpolatedCoords[xField];
+                
+                const virtualY = isScaledMode ? 
+                    ((interpolatedCoords[yField] - globalStats[yField].mean) / globalStats[yField].std) : 
+                    interpolatedCoords[yField];
+
+                const cx = mapCoord(virtualX, xMin, xMax, margin.left, width - margin.right);
+                const cy = mapCoord(virtualY, yMin, yMax, margin.top, height - margin.bottom, true);
+
+                // Glow ring + center core representing migrating specimen
+                pointsHtml += `
+                    <g>
+                        <circle cx="${cx}" cy="${cy}" r="15" fill="none" stroke="#14b8a6" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.85" class="transition-all duration-100">
+                            <animate attributeName="r" values="8;18;8" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.9;0.2;0.9" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="${cx}" cy="${cy}" r="6.5" fill="#ffffff" stroke="#14b8a6" stroke-width="3" style="filter: drop-shadow(0 0 6px #14b8a6);" class="transition-all duration-100" />
+                        <line x1="${cx - 10}" y1="${cy}" x2="${cx + 10}" y2="${cy}" stroke="#ffffff" stroke-width="1.2" opacity="0.9" />
+                        <line x1="${cx}" y1="${cy - 10}" x2="${cx}" y2="${cy + 10}" stroke="#ffffff" stroke-width="1.2" opacity="0.9" />
+                    </g>
+                `;
+            }
+
+            svg.innerHTML += `<g id="scatter-points">${pointsHtml}</g>`;
+        }
+
+        function showScatterTooltip(e, classVal, id, rawData, regionName) {
+            let regionBadge = '';
+            if (regionName === 'A ∩ B') {
+                regionBadge = `<span class="bg-teal-500/20 text-teal-300 text-[8px] font-bold px-1.5 py-0.5 rounded border border-teal-500/30">A ∩ B</span>`;
+            } else if (regionName === 'Solo Clúster A') {
+                regionBadge = `<span class="bg-blue-500/20 text-blue-300 text-[8px] font-bold px-1.5 py-0.5 rounded border border-blue-500/30">Solo A</span>`;
+            } else if (regionName === 'Solo Clúster B') {
+                regionBadge = `<span class="bg-rose-500/20 text-rose-300 text-[8px] font-bold px-1.5 py-0.5 rounded border border-rose-500/30">Solo B</span>`;
+            }
+
+            let attrsList = '';
+            featureNames.forEach(feat => {
+                attrsList += `<span>${feat.replace('_', ' ')}:</span> <span class="font-bold text-right">${rawData[feat]}</span>`;
+            });
+
+            tooltip.innerHTML = `
+                <div class="font-bold border-b border-slate-850 pb-1.5 mb-1.5 text-slate-100 flex items-center justify-between gap-4">
+                    <span>${classVal} <span class="text-[9px] text-slate-500">(${id})</span></span>
+                    ${regionBadge}
+                </div>
+                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 font-mono text-[10px] text-slate-300">
+                    ${attrsList}
+                </div>
+            `;
+            tooltip.style.opacity = "1";
+            tooltip.style.left = `${e.pageX + 15}px`;
+            tooltip.style.top = `${e.pageY + 15}px`;
+        }
+
+        // INTERACTIVE RADAR CHART REPLACED BY CONTINUOUS FLOW PATH SIMULATOR
+        function getCentroidFeatures(key) {
+            const matchedPoints = activeDataset.filter(d => {
+                const status = classifyPoint(d);
+                if (key === 'onlyA') return status.isOnlyA;
+                if (key === 'onlyB') return status.isOnlyB;
+                return status.isIntersection;
+            });
+
+            const centroid = {};
+            featureNames.forEach(feat => {
+                if (matchedPoints.length > 0) {
+                    const sum = matchedPoints.reduce((s, d) => s + d[feat], 0);
+                    centroid[feat] = sum / matchedPoints.length;
+                } else {
+                    centroid[feat] = globalStats[feat]?.mean || 0;
+                }
+            });
+            return centroid;
+        }
+
+        function getCentroidDist(statsRegion, count) {
+            const dist = {};
+            uniqueClasses.forEach(c => {
+                dist[c] = count > 0 ? (statsRegion.dist[c] / count) : 0;
+            });
+            // Fallback for empty groups to avoid division by zero or empty stacked areas
+            const sum = Object.values(dist).reduce((a, b) => a + b, 0);
+            if (sum === 0) {
+                uniqueClasses.forEach(c => { dist[c] = 1 / uniqueClasses.length; });
+            }
+            return dist;
+        }
+
+        function interpolateObjects(obj1, obj2, factor) {
+            const res = {};
+            for (let k in obj1) {
+                if (obj1[k] !== undefined && obj2[k] !== undefined) {
+                    res[k] = obj1[k] + (obj2[k] - obj1[k]) * factor;
+                } else {
+                    res[k] = obj1[k] || obj2[k] || 0;
+                }
+            }
+            return res;
+        }
+
+        function getInterpolatedDist(p, stats) {
+            const countA = stats.onlyA.count;
+            const countB = stats.onlyB.count;
+            const countInt = stats.intersection.count;
+
+            const profileA = getCentroidDist(stats.onlyA, countA);
+            const profileI = getCentroidDist(stats.intersection, countInt);
+            const profileB = getCentroidDist(stats.onlyB, countB);
+
+            if (p <= 0.5) {
+                const factor = p / 0.5;
+                return interpolateObjects(profileA, profileI, factor);
+            } else {
+                const factor = (p - 0.5) / 0.5;
+                return interpolateObjects(profileI, profileB, factor);
+            }
+        }
+
+        function getInterpolatedFeatures(p, stats) {
+            const profileA = getCentroidFeatures('onlyA');
+            const profileI = getCentroidFeatures('intersection');
+            const profileB = getCentroidFeatures('onlyB');
+
+            if (p <= 0.5) {
+                const factor = p / 0.5;
+                return interpolateObjects(profileA, profileI, factor);
+            } else {
+                const factor = (p - 0.5) / 0.5;
+                return interpolateObjects(profileI, profileB, factor);
+            }
+        }
+
+        // ANIMATION MAIN LOOP & REDRAW
+        function drawRadarChart() {
+            const svg = document.getElementById("sim-svg");
+            if (!svg) return;
+            svg.innerHTML = '';
+
+            const width = svg.clientWidth || 600;
+            const height = svg.clientHeight || 180;
+            const margin = { top: 20, right: 30, bottom: 25, left: 45 };
+
+            const stats = getSegmentStatsForRules(activeRules);
+
+            // 1. Plot continuous Area curves representing Target class probabilities
+            const stepsCount = 101;
+            const classPoints = uniqueClasses.map(() => []);
+
+            for (let s = 0; s < stepsCount; s++) {
+                const p = s / 100;
+                const dist = getInterpolatedDist(p, stats);
+                
+                let stackedY = 0;
+                uniqueClasses.forEach((cls, classIdx) => {
+                    stackedY += dist[cls] || 0;
+                    classPoints[classIdx].push({
+                        x: mapCoord(s, 0, 100, margin.left, width - margin.right),
+                        y: mapCoord(stackedY, 0, 1, height - margin.bottom, margin.top)
+                    });
+                });
+            }
+
+            // Draw stacked area polygons
+            let pathsHtml = '';
+            const colors = ['#6366f1', '#10b981', '#ec4899', '#f59e0b', '#14b8a6', '#a855f7'];
+
+            uniqueClasses.forEach((cls, classIdx) => {
+                const topPoints = classPoints[classIdx];
+                const bottomPoints = classIdx === 0 
+                    ? topPoints.map(p => ({ x: p.x, y: height - margin.bottom }))
+                    : classPoints[classIdx - 1];
+
+                // Build polygon closed paths
+                let pathD = `M ${topPoints[0].x},${topPoints[0].y}`;
+                for (let i = 1; i < topPoints.length; i++) {
+                    pathD += ` L ${topPoints[i].x},${topPoints[i].y}`;
+                }
+                for (let i = bottomPoints.length - 1; i >= 0; i--) {
+                    pathD += ` L ${bottomPoints[i].x},${bottomPoints[i].y}`;
+                }
+                pathD += ' Z';
+
+                const color = colors[classIdx % colors.length];
+                pathsHtml += `
+                    <path d="${pathD}" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="1.2" stroke-opacity="0.7" />
+                `;
+            });
+            svg.innerHTML += `<g id="sim-stacked-areas">${pathsHtml}</g>`;
+
+            // 2. Draw vertical divider grid lines for Solo A, Intersección, and Solo B
+            const xSoloA = mapCoord(0, 0, 100, margin.left, width - margin.right);
+            const xInt = mapCoord(50, 0, 100, margin.left, width - margin.right);
+            const xSoloB = mapCoord(100, 0, 100, margin.left, width - margin.right);
+
+            const dividersHtml = `
+                <g stroke="#334155" stroke-width="1" stroke-dasharray="3 3" opacity="0.6">
+                    <line x1="${xSoloA}" y1="${margin.top}" x2="${xSoloA}" y2="${height - margin.bottom + 12}" />
+                    <line x1="${xInt}" y1="${margin.top}" x2="${xInt}" y2="${height - margin.bottom + 12}" />
+                    <line x1="${xSoloB}" y1="${margin.top}" x2="${xSoloB}" y2="${height - margin.bottom + 12}" />
+                </g>
+                <g fill="#94a3b8" font-size="8" font-weight="800" text-anchor="middle" class="uppercase tracking-widest font-sans">
+                    <text x="${xSoloA}" y="${height - margin.bottom + 21}">Solo A (Inicio)</text>
+                    <text x="${xInt}" y="${height - margin.bottom + 21}">Intersección A ∩ B</text>
+                    <text x="${xSoloB}" y="${height - margin.bottom + 21}">Solo B (Destino)</text>
+                </g>
+            `;
+            svg.innerHTML += `<g id="sim-grid">${dividersHtml}</g>`;
+
+            // 3. Draw horizontal probability grid ticks (y-axis)
+            let yGridHtml = '';
+            [0.0, 0.5, 1.0].forEach(prob => {
+                const y = mapCoord(prob, 0, 1, height - margin.bottom, margin.top);
+                yGridHtml += `
+                    <line x1="${margin.left - 5}" y1="${y}" x2="${width - margin.right}" y2="${y}" stroke="#1e293b" stroke-width="0.8" />
+                    <text x="${margin.left - 10}" y="${y + 3}" fill="#64748b" font-size="8" font-family="monospace" text-anchor="end">${(prob * 100)}%</text>
+                `;
+            });
+            svg.innerHTML += `<g id="sim-y-grid">${yGridHtml}</g>`;
+
+            // 4. Draw continuous active slider/traveler pointer line
+            const currX = mapCoord(simT, 0, 100, margin.left, width - margin.right);
+            const indicatorHtml = `
+                <g>
+                    <line x1="${currX}" y1="${margin.top - 5}" x2="${currX}" y2="${height - margin.bottom + 5}" stroke="#ffffff" stroke-width="2" style="filter: drop-shadow(0 0 4px #14b8a6);" />
+                    <circle cx="${currX}" cy="${margin.top - 5}" r="4.5" fill="#14b8a6" stroke="#ffffff" stroke-width="1.5" />
+                    <circle cx="${currX}" cy="${height - margin.bottom + 5}" r="4.5" fill="#14b8a6" stroke="#ffffff" stroke-width="1.5" />
+                </g>
+            `;
+            svg.innerHTML += `<g id="sim-indicator">${indicatorHtml}</g>`;
+
+            // 5. Update Telemetry text readouts
+            const p = simT / 100;
+            const currFeatures = getInterpolatedFeatures(p, stats);
+            const currDist = getInterpolatedDist(p, stats);
+
+            let regionText = '';
+            if (p < 0.15) regionText = "Solo Clúster A";
+            else if (p >= 0.15 && p < 0.45) regionText = "Solo A ➔ Intersección";
+            else if (p >= 0.45 && p <= 0.55) regionText = "Intersección (A ∩ B)";
+            else if (p > 0.55 && p <= 0.85) regionText = "Intersección ➔ Solo B";
+            else regionText = "Solo Clúster B";
+            document.getElementById("telemetry-region").textContent = regionText;
+
+            let maxClass = '-';
+            let maxVal = -1;
+            uniqueClasses.forEach(c => {
+                if (currDist[c] > maxVal) {
+                    maxVal = currDist[c];
+                    maxClass = c;
+                }
+            });
+            const pctVal = (maxVal * 100).toFixed(0);
+            document.getElementById("telemetry-class").textContent = `${maxClass} (${pctVal}%)`;
+
+            let featuresString = '';
+            featureNames.forEach((feat, idx) => {
+                const val = currFeatures[feat] !== undefined ? currFeatures[feat].toFixed(1) : '-';
+                featuresString += `${feat.replace('_', ' ').toUpperCase()}: ${val}${idx < featureNames.length - 1 ? ' | ' : ''}`;
+            });
+            document.getElementById("telemetry-features").textContent = featuresString;
+        }
+
+        // ANIMATION CONTROLLER TRIGGERS
+        function toggleSimulation() {
+            const btn = document.getElementById("btn-play-sim");
+            const icon = document.getElementById("play-icon");
+            const text = document.getElementById("play-text");
+
+            if (isSimPlaying) {
+                // Pause simulation
+                isSimPlaying = false;
+                clearInterval(simInterval);
+                icon.className = "fa-solid fa-play";
+                text.textContent = "Animar";
+                btn.className = "px-3.5 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-md shadow-teal-500/10";
+            } else {
+                // Start animation loop
+                isSimPlaying = true;
+                icon.className = "fa-solid fa-pause";
+                text.textContent = "Pausar";
+                btn.className = "px-3.5 py-1.5 bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-md shadow-rose-500/10";
+                
+                simInterval = setInterval(() => {
+                    simT += 1.5;
+                    if (simT > 100) simT = 0; // Smooth loop reset
+                    
+                    const slider = document.getElementById("sim-slider");
+                    if (slider) slider.value = simT;
+
+                    updateVisuals(false); // Quick update excluding leaderboard recalculations for optimal FPS performance
+                }, 60);
+            }
+        }
+
+        function manualSimSlide(value) {
+            simT = parseFloat(value);
+            updateVisuals(false);
+        }
+
+        // PROPORTIONAL ADAPTIVE VENN ENGINE (Area proportional to Count)
+        function updateVennDiagram(stats) {
+            const countA = stats.onlyA.count + stats.intersection.count;
+            const countB = stats.onlyB.count + stats.intersection.count;
+            const countInt = stats.intersection.count;
+
+            const maxR = 55;
+            const minR = 25;
+            const maxExpectedVal = activeDataset.length * 0.4; 
+
+            const rA = countA > 0 ? Math.max(minR, Math.min(maxR, minR + (maxR - minR) * Math.sqrt(countA / maxExpectedVal))) : 0;
+            const rB = countB > 0 ? Math.max(minR, Math.min(maxR, minR + (maxR - minR) * Math.sqrt(countB / maxExpectedVal))) : 0;
+
+            let d = 0;
+            if (countA > 0 && countB > 0) {
+                const maxOverlap = Math.min(countA, countB);
+                const overlapRatio = countInt / Math.max(1, maxOverlap); 
+
+                const minD = Math.abs(rA - rB) * 0.4; 
+                const maxD = rA + rB + 16;           
+                
+                d = maxD - (maxD - minD) * overlapRatio;
+            } else {
+                d = rA + rB + 20; 
+            }
+
+            const centerX = 150;
+            const centerY = 80;
+
+            let cxA = centerX;
+            let cxB = centerX;
+
+            if (rA > 0 && rB > 0) {
+                cxA = centerX - (d / 2);
+                cxB = centerX + (d / 2);
+            } else if (rA > 0) {
+                cxA = centerX;
+            } else if (rB > 0) {
+                cxB = centerX;
+            }
+
+            const elA = document.getElementById("venn-circle-a");
+            const elB = document.getElementById("venn-circle-b");
+            const elClip = document.getElementById("clip-circle-a-elem");
+            const elInt = document.getElementById("venn-intersection");
+
+            if (elA) {
+                elA.setAttribute("cx", cxA);
+                elA.setAttribute("r", rA);
+                elA.setAttribute("fill-opacity", rA > 0 ? "0.12" : "0");
+                elA.setAttribute("stroke-opacity", rA > 0 ? "1" : "0");
+            }
+            if (elB) {
+                elB.setAttribute("cx", cxB);
+                elB.setAttribute("r", rB);
+                elB.setAttribute("fill-opacity", rB > 0 ? "0.1" : "0");
+                elB.setAttribute("stroke-opacity", rB > 0 ? "1" : "0");
+            }
+            if (elClip) {
+                elClip.setAttribute("cx", cxA);
+                elClip.setAttribute("r", rA);
+            }
+            if (elInt) {
+                elInt.setAttribute("cx", cxB);
+                elInt.setAttribute("r", rB);
+                elInt.setAttribute("fill-opacity", countInt > 0 ? "0.3" : "0");
+                elInt.setAttribute("stroke-opacity", countInt > 0 ? "1" : "0");
+            }
+
+            const lblA = document.getElementById("venn-lbl-a");
+            const lblB = document.getElementById("venn-lbl-b");
+            const lblInt = document.getElementById("venn-lbl-int");
+
+            if (lblA) {
+                const shift = (countInt > 0 && rA > 30) ? (rA * 0.35) : 0;
+                lblA.querySelector("text").setAttribute("x", cxA - shift);
+                lblA.querySelectorAll("text")[1].setAttribute("x", cxA - shift);
+                lblA.style.opacity = rA > 0 ? "1" : "0";
+                document.getElementById("count-only-a").textContent = stats.onlyA.count;
+            }
+
+            if (lblB) {
+                const shift = (countInt > 0 && rB > 30) ? (rB * 0.35) : 0;
+                lblB.querySelector("text").setAttribute("x", cxB + shift);
+                lblB.querySelectorAll("text")[1].setAttribute("x", cxB + shift);
+                lblB.style.opacity = rB > 0 ? "1" : "0";
+                document.getElementById("count-only-b").textContent = stats.onlyB.count;
+            }
+
+            if (lblInt) {
+                const midX = (cxA + cxB) / 2;
+                lblInt.querySelector("text").setAttribute("x", midX);
+                lblInt.querySelectorAll("text")[1].setAttribute("x", midX);
+                lblInt.style.opacity = countInt > 0 ? "1" : "0";
+                document.getElementById("count-intersect").textContent = countInt;
+            }
+        }
+
+        // DYNAMIC SLIDERS CONSTRUCTOR BASED ON CURRENT DATA BOUNDARIES
+        function buildSliders() {
+            const container = document.getElementById("rules-sliders-container");
+            container.innerHTML = '';
+
+            const categories = [
+                { id: 'intersection', title: 'Espacio Base (Intersection)', color: 'text-teal-400 border-teal-500/20 bg-teal-950/10' },
+                { id: 'only_cluster_a', title: 'Restricciones de Clúera A', color: 'text-blue-400 border-blue-500/20 bg-blue-950/10' },
+                { id: 'only_cluster_b', title: 'Restricciones de Clúster B', color: 'text-rose-400 border-rose-500/20 bg-rose-950/10' }
+            ];
+
+            categories.forEach(cat => {
+                const ruleList = activeRules[cat.id];
+                if (!ruleList || ruleList.length === 0) return;
+
+                let cardHtml = `
+                    <div class="border rounded-xl p-4 ${cat.color}">
+                        <div class="text-xs font-bold uppercase tracking-wider mb-3 flex justify-between items-center">
+                            <span>${cat.title}</span>
+                            <span class="text-[9px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800">
+                                ${ruleList.length} dimensión(es)
+                            </span>
+                        </div>
+                        <div class="space-y-4">
+                `;
+
+                ruleList.forEach((rule, idx) => {
+                    let minLimit, maxLimit, step;
+                    let suffix = " u";
+
+                    const fieldVal = rule.field;
+                    const datasetValues = activeDataset.map(d => isScaledMode ? d.scaled[fieldVal] : d[fieldVal]);
+                    const absMin = Math.min(...datasetValues);
+                    const absMax = Math.max(...datasetValues);
+
+                    if (rule.native === 'scaled') {
+                        minLimit = -3.5;
+                        maxLimit = 3.5;
+                        step = 0.05;
+                        suffix = " σ (Z)";
+                    } else {
+                        suffix = " u";
+                        step = 0.05;
+                        minLimit = parseFloat((absMin - Math.abs(absMin * 0.1)).toFixed(2));
+                        maxLimit = parseFloat((absMax + Math.abs(absMax * 0.1)).toFixed(2));
+                    }
+
+                    const formattedField = rule.field.replace('_', ' ');
+
+                    cardHtml += `
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="capitalize font-semibold text-slate-300">${formattedField}</span>
+                                <span class="font-mono text-xs bg-slate-900 px-1.5 py-0.5 rounded text-teal-300">
+                                    <span id="lbl-${cat.id}-${idx}-min">${rule.min.toFixed(2)}</span> a <span id="lbl-${cat.id}-${idx}-max">${rule.max.toFixed(2)}</span>${suffix}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label class="text-[8px] text-slate-500 font-bold uppercase block">Mínimo</label>
+                                    <input type="range" min="${minLimit}" max="${maxLimit}" step="${step}" value="${rule.min}" 
+                                           oninput="updateRuleValue('${cat.id}', ${idx}, 'min', this)"
+                                           class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-teal-500">
+                                </div>
+                                <div>
+                                    <label class="text-[8px] text-slate-500 font-bold uppercase block">Máximo</label>
+                                    <input type="range" min="${minLimit}" max="${maxLimit}" step="${step}" value="${rule.max}" 
+                                           oninput="updateRuleValue('${cat.id}', ${idx}, 'max', this)"
+                                           class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-teal-500">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                cardHtml += `
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        function updateRuleValue(category, ruleIndex, fieldType, elem) {
+            const val = parseFloat(elem.value);
+            activeRules[category][ruleIndex][fieldType] = val;
+            
+            const labelId = `lbl-${category}-${ruleIndex}-${fieldType}`;
+            const lbl = document.getElementById(labelId);
+            if(lbl) lbl.textContent = val.toFixed(2);
+
+            updateVisuals();
+        }
+
+        // RESET TO CURRENT EXPERIMENT NATIVE VALUES
+        function resetRules() {
+            const targetExp = experimentsPool.find(e => e.id === currentExperimentId);
+            activeRules = cloneRules(targetExp.rules);
+            buildSliders();
+            updateVisuals();
+        }
+
+        // EXPERIMENT SELECTION PIPELINE
+        function selectExperiment(id) {
+            currentExperimentId = id;
+            
+            const targetExp = experimentsPool.find(e => e.id === id);
+            if(!targetExp) return;
+
+            document.getElementById("exp-title").textContent = targetExp.name;
+            document.getElementById("exp-desc").textContent = targetExp.desc;
+
+            activeRules = cloneRules(targetExp.rules);
+
+            const xVal = targetExp.rules.intersection[0]?.field || featureNames[0];
+            const yVal = targetExp.rules.only_cluster_a[0]?.field || featureNames[1];
+
+            const selX = document.getElementById("sel-axis-x");
+            const selY = document.getElementById("sel-axis-y");
+            if (selX && xVal) selX.value = xVal;
+            if (selY && yVal) selY.value = yVal;
+
+            buildSliders();
+            updateVisuals();
+        }
+
+        function toggleScaling(scaled) {
+            isScaledMode = scaled;
+
+            document.getElementById("btn-scale-scaled").className = scaled ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-teal-350 border border-teal-500/20" : "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200";
+            document.getElementById("btn-scale-raw").className = !scaled ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-teal-350 border border-teal-500/20" : "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200";
+
+            updateVisuals();
+        }
+
+        // MAIN SCREEN REDRAW PIPELINE
+        function updateVisuals(rebuildLeaderboard = true) {
+            const stats = getSegmentStatsForRules(activeRules);
+
+            // Proportional Venn update
+            updateVennDiagram(stats);
+
+            // Region summaries
+            document.getElementById("region-a-total").innerHTML = `${stats.onlyA.count + stats.intersection.count} <span class="text-xs font-normal text-slate-500">muestras</span>`;
+            document.getElementById("region-b-total").innerHTML = `${stats.onlyB.count + stats.intersection.count} <span class="text-xs font-normal text-slate-500">muestras</span>`;
+
+            // Transition flow labels
+            document.getElementById("flow-count-a").innerHTML = `${stats.onlyA.count} <span class="text-xs font-normal text-slate-500">obs</span>`;
+            document.getElementById("flow-count-intersect").innerHTML = `${stats.intersection.count} <span class="text-xs font-normal text-slate-500">obs</span>`;
+            document.getElementById("flow-count-b").innerHTML = `${stats.onlyB.count} <span class="text-xs font-normal text-slate-500">obs</span>`;
+
+            // Micro progress distribution bars
+            document.getElementById("flow-dist-a").innerHTML = renderDistributionHTML(stats.onlyA.dist, stats.onlyA.count);
+            document.getElementById("flow-dist-intersect").innerHTML = renderDistributionHTML(stats.intersection.dist, stats.intersection.count);
+            document.getElementById("flow-dist-b").innerHTML = renderDistributionHTML(stats.onlyB.dist, stats.onlyB.count);
+
+            // Redraw plots (Updates Radar Chart instead of PCP)
+            drawScatter();
+            drawRadarChart();
+
+            // Recalculate and order Leaderboard table (conditional for FPS during live plays)
+            if (rebuildLeaderboard) {
+                updateLeaderboard();
+            }
+
+            // Run statistical transition insights
+            generateTransitionInsight(stats);
+        }
+
+        function generateTransitionInsight(stats) {
+            const insightText = document.getElementById("transition-insight-text");
+            const delta = calculateTVD(stats);
+
+            function getMajorityClass(dist) {
+                let maxVal = -1;
+                let major = "Ninguno";
+                for (let k in dist) {
+                    if (dist[k] > maxVal) {
+                        maxVal = dist[k];
+                        major = k;
+                    }
+                }
+                const total = Object.values(dist).reduce((a, b) => a + b, 0);
+                return { 
+                    major, 
+                    pct: total > 0 ? ((maxVal / total) * 100).toFixed(0) : 0 
+                };
+            }
+
+            const majA = getMajorityClass(stats.onlyA.dist);
+            const majInt = getMajorityClass(stats.intersection.dist);
+            const majB = getMajorityClass(stats.onlyB.dist);
+
+            if (stats.onlyA.count === 0 && stats.onlyB.count === 0 && stats.intersection.count === 0) {
+                insightText.innerHTML = "No hay observaciones que satisfagan las reglas en este momento. Ajusta los límites de los calibradores para poblar el espacio de datos.";
+                return;
+            }
+
+            let text = `Evaluando la transición multidimensional: `;
+            text += `La hipótesis de cambio extremo se evalúa con una **Distancia de Variación Total (TVD) de $\\delta = ${delta.toFixed(3)}$**. `;
+
+            if (delta >= 0.80) {
+                text += `Esta hipótesis queda <span class="text-teal-400 font-bold">Científicamente Validada</span> con un comportamiento de mutación de clase extremadamente severo e inequívoco. `;
+            } else if (delta >= 0.50) {
+                text += `Se observa una transición <span class="text-blue-400 font-semibold">Moderada</span>. Existe variación en el corredor pero coexisten comportamientos compartidos. `;
+            } else {
+                text += `La transición es <span class="text-slate-500 font-bold">Débil</span>; los clústeres extremos exhiben proporciones casi idénticas de la variable objetivo, refutando la hipótesis de mutación extrema. `;
+            }
+
+            text += `<br><br>En el **Clúster A exclusivo**, domina la clase **${majA.major} (${majA.pct}%)**. Al cruzar por el corredor compartido **A ∩ B**, la clase predominante es **${majInt.major} (${majInt.pct}%)**, y finalmente, al consolidar la transición en el **Clúster B exclusivo**, dominas con **${majB.major} (${majB.pct}%)**.`;
+
+            insightText.innerHTML = text;
+        }
+
+        // Linear scaling helper for coordinates mapping
+        function mapCoord(value, inMin, inMax, outMin, outMax, invert = false) {
+            const fraction = (value - inMin) / (inMax - inMin || 1);
+            if (invert) {
+                return outMax - (fraction * (outMax - outMin));
+            }
+            return outMin + (fraction * (outMax - outMin));
+        }
+
+        function renderDistributionHTML(dist, total) {
+            if (total === 0) {
+                return `<div class="text-[10px] text-slate-600 italic py-2">Sin observaciones</div>`;
+            }
+
+            // Dynamically build classes progress bars
+            let bars = '';
+            let labels = '';
+            
+            const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-purple-500'];
+            const labelColors = ['text-indigo-400', 'text-emerald-400', 'text-rose-400', 'text-amber-400', 'text-teal-400', 'text-purple-400'];
+
+            uniqueClasses.forEach((c, idx) => {
+                const count = dist[c] || 0;
+                if (count > 0) {
+                    const pct = ((count / total) * 100).toFixed(0);
+                    const color = colors[idx % colors.length];
+                    const lblColor = labelColors[idx % labelColors.length];
+                    bars += `<div class="${color}" style="width: ${pct}%"></div>`;
+                    labels += `<span class="${lblColor}">${c.substring(0,3)}: ${pct}%</span>`;
+                }
+            });
+
+            return `
+                <div class="space-y-1">
+                    <div class="flex h-3 w-full rounded-full overflow-hidden bg-slate-900 border border-slate-800">
+                        ${bars}
+                    </div>
+                    <div class="flex justify-between text-[9px] font-semibold tracking-wider font-mono">
+                        ${labels}
+                    </div>
+                </div>
+            `;
+        }
+
+        // INITIAL BOOTSTRAP ON LOAD
+        window.onload = function() {
+            // Load Default Dataset (Iris)
+            activeDataset = generateIrisDataset();
+            featureNames = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+            targetColumn = 'species';
+            uniqueClasses = ["Setosa", "Versicolor", "Virginica"];
+
+            rebuildAxisSelectors();
+            calculateDatasetStats();
+            selectExperiment(1);
+
+            // Responsive handlers
+            window.addEventListener('resize', () => {
+                drawScatter();
+                drawRadarChart();
+            });
+        }
+    </script>
 </body>
 </html>
