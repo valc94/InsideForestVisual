@@ -344,6 +344,7 @@ def build_html(rows: list[dict[str, Any]], dcfg: DatasetConfig, ecfg: Evaluation
 
     payload = {
         "dataset_config": dcfg.__dict__,
+        "rows": rows,
         "sampling_info": sampling_info,
         "target_mode_info": {"requested": dcfg.target_mode, "effective": effective_mode, "bins": dcfg.regression_bins},
         "evaluation_config": ecfg.__dict__,

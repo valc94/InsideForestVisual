@@ -466,6 +466,8 @@
     <script>
         // Set deterministic pseudo-random seed generator for data generation stability (LCG)
         const runtimePayload = {{PAYLOAD_JSON}};
+        const runtimeConfig = runtimePayload.dataset_config || {};
+        const runtimeRows = Array.isArray(runtimePayload.rows) ? runtimePayload.rows : [];
         let seed = 98765;
         function random() {
             let x = Math.sin(seed++) * 10000;
@@ -481,7 +483,7 @@
             return num * std + mean;
         }
 
-        // DEFAULT DATASET (Built-in Iris Dataset)
+        // Active dataset loaded from Python payload (or fallback Iris generator)
         let activeDataset = [];
         let featureNames = [];   // Numerical features detected in dataset
         let targetColumn = '';   // Categorical target detected
@@ -1138,21 +1140,33 @@
         }
 
         function restoreDefaultIris() {
-            activeDataset = generateIrisDataset();
-            featureNames = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
-            targetColumn = 'species';
-            uniqueClasses = ["Setosa", "Versicolor", "Virginica"];
-
-            document.getElementById("data-badge").textContent = "Dataset: Base (Defecto)";
+            const hasRuntimeDataset = runtimeRows.length > 0 && runtimeConfig.target_column && Array.isArray(runtimeConfig.feature_columns);
+            if (hasRuntimeDataset) {
+                activeDataset = runtimeRows.map(r => ({ ...r }));
+                featureNames = [...runtimeConfig.feature_columns];
+                targetColumn = runtimeConfig.target_column;
+                uniqueClasses = [...new Set(activeDataset.map(d => d[targetColumn]))].sort();
+                document.getElementById("data-badge").textContent = `Dataset: ${runtimeConfig.dataset_id || 'runtime'} (${activeDataset.length} filas)`;
+                experimentsPool = (runtimePayload.experiments || []).map(exp => ({
+                    id: exp.id,
+                    name: exp.name,
+                    desc: exp.description || exp.name,
+                    target_column: exp.target_column || targetColumn,
+                    rules: exp.rules || {}
+                }));
+            } else {
+                activeDataset = generateIrisDataset();
+                featureNames = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+                targetColumn = 'species';
+                uniqueClasses = ["Setosa", "Versicolor", "Virginica"];
+                document.getElementById("data-badge").textContent = "Dataset: Base (Defecto)";
+            }
 
             rebuildAxisSelectors();
             calculateDatasetStats();
-
-            // Restore original pool of 30 Iris experiments
-            experimentsPool = experimentsPool.slice(0, 30); // Preserves original array reference
-
-            selectExperiment(1);
-            showToast("¡Iris Dataset restaurado con éxito!");
+            const firstExpId = experimentsPool.length > 0 ? experimentsPool[0].id : 1;
+            selectExperiment(firstExpId);
+            showToast("¡Dataset restaurado con éxito!");
         }
 
         // GENERATE DYNAMIC EXPERIMENTS FOR ANY CUSTOM CSV
@@ -2154,15 +2168,31 @@
 
         // INITIAL BOOTSTRAP ON LOAD
         window.onload = function() {
-            // Load Default Dataset (Iris)
-            activeDataset = generateIrisDataset();
-            featureNames = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
-            targetColumn = 'species';
-            uniqueClasses = ["Setosa", "Versicolor", "Virginica"];
+            const hasRuntimeDataset = runtimeRows.length > 0 && runtimeConfig.target_column && Array.isArray(runtimeConfig.feature_columns);
+            if (hasRuntimeDataset) {
+                activeDataset = runtimeRows.map(r => ({ ...r }));
+                featureNames = [...runtimeConfig.feature_columns];
+                targetColumn = runtimeConfig.target_column;
+                uniqueClasses = [...new Set(activeDataset.map(d => d[targetColumn]))].sort();
+                document.getElementById("data-badge").textContent = `Dataset: ${runtimeConfig.dataset_id || 'runtime'} (${activeDataset.length} filas)`;
+                experimentsPool = (runtimePayload.experiments || []).map(exp => ({
+                    id: exp.id,
+                    name: exp.name,
+                    desc: exp.description || exp.name,
+                    target_column: exp.target_column || targetColumn,
+                    rules: exp.rules || {}
+                }));
+            } else {
+                activeDataset = generateIrisDataset();
+                featureNames = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'];
+                targetColumn = 'species';
+                uniqueClasses = ["Setosa", "Versicolor", "Virginica"];
+            }
 
             rebuildAxisSelectors();
             calculateDatasetStats();
-            selectExperiment(1);
+            const firstExpId = experimentsPool.length > 0 ? experimentsPool[0].id : 1;
+            selectExperiment(firstExpId);
 
             // Responsive handlers
             window.addEventListener('resize', () => {
