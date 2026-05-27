@@ -4,6 +4,7 @@ import csv
 import json
 import math
 import random
+import argparse
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import mean
@@ -51,6 +52,9 @@ class EvaluationConfig:
     min_samples_only_a: int = 1
     min_samples_only_b: int = 1
     ranking_order: str = "desc"
+    binary_positive_label: str = "1"
+    binary_negative_label: str = "0"
+    require_all_classes_in_segment: bool = False
 
 
 class ValidationError(ValueError):
@@ -286,6 +290,30 @@ def tvd(stats: dict[str, Any], classes: list[str], min_a: int, min_b: int) -> fl
     return 0.5 * delta
 
 
+def binary_segment_delta(
+    stats: dict[str, Any],
+    positive_label: str,
+    negative_label: str,
+    min_a: int,
+    min_b: int,
+    require_all_classes: bool,
+) -> float:
+    count_a = stats["onlyA"]["count"]
+    count_b = stats["onlyB"]["count"]
+    if count_a < min_a or count_b < min_b:
+        return 0.0
+    if require_all_classes and (
+        stats["onlyA"]["dist"].get(positive_label, 0) == 0
+        or stats["onlyA"]["dist"].get(negative_label, 0) == 0
+        or stats["onlyB"]["dist"].get(positive_label, 0) == 0
+        or stats["onlyB"]["dist"].get(negative_label, 0) == 0
+    ):
+        return 0.0
+    pa = stats["onlyA"]["dist"].get(positive_label, 0) / count_a
+    pb = stats["onlyB"]["dist"].get(positive_label, 0) / count_b
+    return abs(pa - pb)
+
+
 
 
 
@@ -331,12 +359,23 @@ def build_html(rows: list[dict[str, Any]], dcfg: DatasetConfig, ecfg: Evaluation
         rows=rows, target_column=dcfg.target_column, mode=dcfg.target_mode, bins=dcfg.regression_bins
     )
     classes = sorted(set(target_labels))
+    is_binary = len(classes) == 2 and dcfg.target_mode == "classification"
     ranking = []
     for exp in experiments:
         if not exp.enabled:
             continue
         st = segment_stats(rows, exp, classes, target_labels)
-        delta = tvd(st, classes, ecfg.min_samples_only_a, ecfg.min_samples_only_b)
+        if is_binary:
+            delta = binary_segment_delta(
+                st,
+                positive_label=ecfg.binary_positive_label,
+                negative_label=ecfg.binary_negative_label,
+                min_a=ecfg.min_samples_only_a,
+                min_b=ecfg.min_samples_only_b,
+                require_all_classes=ecfg.require_all_classes_in_segment,
+            )
+        else:
+            delta = tvd(st, classes, ecfg.min_samples_only_a, ecfg.min_samples_only_b)
         ranking.append((delta, exp, st))
 
     reverse = ecfg.ranking_order == "desc"
@@ -347,6 +386,7 @@ def build_html(rows: list[dict[str, Any]], dcfg: DatasetConfig, ecfg: Evaluation
         "rows": rows,
         "sampling_info": sampling_info,
         "target_mode_info": {"requested": dcfg.target_mode, "effective": effective_mode, "bins": dcfg.regression_bins},
+        "target_cardinality_info": {"n_classes": len(classes), "classes": classes, "is_binary": is_binary},
         "evaluation_config": ecfg.__dict__,
         "experiments": [
             {
@@ -465,6 +505,54 @@ def invented_titania_experiments() -> list[Experiment]:
     ]
 
 
+
+def titanic_rows(seed: int = 77) -> list[dict[str, Any]]:
+    """Dataset sintético estilo Titanic para demo de clasificación de supervivencia."""
+    rng = random.Random(seed)
+    rows: list[dict[str, Any]] = []
+    specs = [
+        (1, "female", 0.63, 120),
+        (1, "male", 0.42, 120),
+        (2, "female", 0.52, 110),
+        (2, "male", 0.30, 110),
+        (3, "female", 0.31, 140),
+        (3, "male", 0.17, 140),
+    ]
+    for pclass, sex, surv_prob, n in specs:
+        for i in range(n):
+            age = max(0.5, rng.gauss(30 if pclass == 1 else 28, 14))
+            sibsp = max(0, int(round(rng.gauss(0.7 if pclass == 3 else 0.4, 0.9))))
+            parch = max(0, int(round(rng.gauss(0.5 if sex == "female" else 0.3, 0.8))))
+            fare_base = {1: 78, 2: 22, 3: 9}[pclass]
+            fare = max(3.0, rng.gauss(fare_base, fare_base * 0.28))
+            survived = 1 if rng.random() < surv_prob else 0
+            rows.append({
+                "passenger_id": f"{pclass}-{sex[:1]}-{i}",
+                "pclass": float(pclass),
+                "sex_female": 1.0 if sex == "female" else 0.0,
+                "age": round(age, 2),
+                "sibsp": float(sibsp),
+                "parch": float(parch),
+                "fare": round(fare, 2),
+                "survived": str(survived),
+            })
+    return rows
+
+
+def invented_titanic_experiments() -> list[Experiment]:
+    return [
+        Experiment(1, "Mujeres 1ra clase vs hombres 3ra", "Segmentos clásicos de supervivencia", "survived", {
+            "intersection": [Rule("age", 1, 75, "raw")],
+            "only_cluster_a": [Rule("pclass", 1, 1, "raw"), Rule("sex_female", 1, 1, "raw")],
+            "only_cluster_b": [Rule("pclass", 3, 3, "raw"), Rule("sex_female", 0, 0, "raw")],
+        }, tags=["titanic", "survival"]),
+        Experiment(2, "Tarifa alta vs baja", "Comparación por nivel de tarifa", "survived", {
+            "intersection": [Rule("pclass", 1, 3, "raw")],
+            "only_cluster_a": [Rule("fare", 35, 200, "raw")],
+            "only_cluster_b": [Rule("fare", 3, 20, "raw")],
+        }, tags=["titanic", "fare"]),
+    ]
+
 def california_housing_rows(seed: int = 101) -> list[dict[str, Any]]:
     rng = random.Random(seed)
     rows = []
@@ -526,8 +614,17 @@ def run_demo(output_dir: str | Path = ".") -> dict[str, Path]:
 
     econfg = EvaluationConfig(primary_metric="tvd", min_samples_only_a=5, min_samples_only_b=5)
 
+    titanic = titanic_rows()
+    titanic_cfg = DatasetConfig(
+        dataset_id="titanic_sintetico",
+        feature_columns=["pclass", "sex_female", "age", "sibsp", "parch", "fare"],
+        target_column="survived",
+        id_column="passenger_id",
+    )
+
     iris_html = build_html(iris, iris_cfg, econfg, invented_iris_experiments())
     tit_html = build_html(titania, tit_cfg, econfg, invented_titania_experiments())
+    titanic_html = build_html(titanic, titanic_cfg, econfg, invented_titanic_experiments())
 
     # dataset adicional tipo regresión (target continuo)
     housing = california_housing_rows()
@@ -544,15 +641,72 @@ def run_demo(output_dir: str | Path = ".") -> dict[str, Path]:
     iris_path = out / "iris_generated.html"
     tit_path = out / "titania_generated.html"
     house_path = out / "housing_generated.html"
+    titanic_path = out / "titanic_generated.html"
     iris_path.write_text(iris_html, encoding="utf-8")
     tit_path.write_text(tit_html, encoding="utf-8")
     house_path.write_text(housing_html, encoding="utf-8")
+    titanic_path.write_text(titanic_html, encoding="utf-8")
 
-    return {"iris": iris_path, "titania": tit_path, "housing": house_path}
+    return {"iris": iris_path, "titania": tit_path, "housing": house_path, "titanic": titanic_path}
+
+
+def run_titanic_exam(
+    output_dir: str | Path = "generated",
+    seed: int = 77,
+    min_samples_only_a: int = 5,
+    min_samples_only_b: int = 5,
+    positive_label: str = "1",
+    negative_label: str = "0",
+    require_all_classes_in_segment: bool = False,
+) -> Path:
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    rows = titanic_rows(seed=seed)
+    cfg = DatasetConfig(
+        dataset_id="titanic_sintetico_examen",
+        feature_columns=["pclass", "sex_female", "age", "sibsp", "parch", "fare"],
+        target_column="survived",
+        id_column="passenger_id",
+    )
+    ecfg = EvaluationConfig(
+        primary_metric="binary_delta",
+        min_samples_only_a=min_samples_only_a,
+        min_samples_only_b=min_samples_only_b,
+        binary_positive_label=positive_label,
+        binary_negative_label=negative_label,
+        require_all_classes_in_segment=require_all_classes_in_segment,
+    )
+    html = build_html(rows, cfg, ecfg, invented_titanic_experiments())
+    out_path = out / "titanic_exam_generated.html"
+    out_path.write_text(html, encoding="utf-8")
+    return out_path
 
 
 if __name__ == "__main__":
-    paths = run_demo("generated")
-    print("Generados:")
-    for k, p in paths.items():
-        print(f" - {k}: {p}")
+    parser = argparse.ArgumentParser(description="InsideForestVisual html_builder")
+    parser.add_argument("--mode", choices=["demo", "titanic_exam"], default="demo")
+    parser.add_argument("--output-dir", default="generated")
+    parser.add_argument("--seed", type=int, default=77)
+    parser.add_argument("--min-only-a", type=int, default=5)
+    parser.add_argument("--min-only-b", type=int, default=5)
+    parser.add_argument("--positive-label", default="1")
+    parser.add_argument("--negative-label", default="0")
+    parser.add_argument("--require-all-classes-in-segment", action="store_true")
+    args = parser.parse_args()
+
+    if args.mode == "demo":
+        paths = run_demo(args.output_dir)
+        print("Generados:")
+        for k, p in paths.items():
+            print(f" - {k}: {p}")
+    else:
+        p = run_titanic_exam(
+            output_dir=args.output_dir,
+            seed=args.seed,
+            min_samples_only_a=args.min_only_a,
+            min_samples_only_b=args.min_only_b,
+            positive_label=args.positive_label,
+            negative_label=args.negative_label,
+            require_all_classes_in_segment=args.require_all_classes_in_segment,
+        )
+        print(f"Examen Titanic generado: {p}")
