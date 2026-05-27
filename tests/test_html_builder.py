@@ -12,12 +12,15 @@ from html_builder import (
     evaluate_rule_set,
     invented_iris_experiments,
     invented_titania_experiments,
+    invented_titanic_experiments,
     invented_housing_experiments,
     iris_rows,
     run_demo,
+    run_titanic_exam,
     segment_stats,
     sample_rows_if_large,
     titania_rows,
+    titanic_rows,
     tvd,
 )
 
@@ -66,7 +69,9 @@ def test_run_demo_creates_both_html(tmp_path):
     paths = run_demo(tmp_path)
     assert paths["iris"].exists()
     assert paths["titania"].exists()
+    assert paths["titanic"].exists()
     assert "titania_sintetico" in paths["titania"].read_text(encoding="utf-8")
+    assert "titanic_sintetico" in paths["titanic"].read_text(encoding="utf-8")
 
 
 def test_invented_experiments_present():
@@ -108,3 +113,18 @@ def test_housing_html_generation():
     html = build_html(rows, cfg, EvaluationConfig(min_samples_only_a=5, min_samples_only_b=5), invented_housing_experiments())
     assert "housing_test" in html
     assert "target_mode_info" in html
+
+
+def test_titanic_experiments_present_and_rows():
+    assert len(invented_titanic_experiments()) >= 2
+    rows = titanic_rows(seed=9)
+    assert len(rows) > 600
+    assert {"survived", "fare", "pclass"}.issubset(rows[0].keys())
+
+
+def test_run_titanic_exam_binary_output(tmp_path):
+    out = run_titanic_exam(output_dir=tmp_path, require_all_classes_in_segment=True)
+    text = out.read_text(encoding="utf-8")
+    assert "titanic_sintetico_examen" in text
+    assert "target_cardinality_info" in text
+    assert "\"is_binary\": true" in text.lower()
